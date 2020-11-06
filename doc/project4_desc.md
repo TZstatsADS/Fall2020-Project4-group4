@@ -6,7 +6,7 @@ In this project, working in teams, you will implement, evaluate and **compare** 
 ### Challenge
 *Causal inference* refers to the process of drawing a conclusion about a causal connection based on the conditions of the occurrence of an effect.
 
-For this project, each team is assigned **specific algorithms** from the *Causal inference* literature. You will study the algorithms carefully and implement them, from scratch. **Algorithm assignments will be posted to a piazza post specific to individual groups**.
+For this project, each team is assigned **specific algorithms** from the *Causal inference* literature. You will study the algorithms carefully and implement them, from scratch. **Algorithm assignments will be posted to a piazza post**.
 
 For submission, you will submit the GitHub repo of your codes, a *testing* report (must be a **reproducible** R/Python notebook) on the algorithms in terms of a *side-by-side* comparison of their performance and computational efficiency. 
 
@@ -58,6 +58,10 @@ Each week, we will give a tutorial in class and having live discussion and brain
 3. Estimation of Causal Effects using Propensity ScoreWeighting: An Application to Data on Right HeartCatheterization - discusses the weighted logistic regression model (see section 2).
 
 4. An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies - discusses using propensity score as a covariate in the regression adjustment (see section Covariate Adjustment Using the Propensity Score).
+
+5. Matching Methods for Causal Inference: A Review and a Look Forward - Section 3 introduces different matching methods for ATE and ATT (including full matching and inverse probability of treatment weighting). Section 5 talks about analysis after the matching.
+
+6. Stratification and weighting via the propensity score in estimation of causal treatment effects: See Section 2 for stratification (or subclassification) using propensity score and doubly robust estimation, with the goal of estimating ATE.
 
 #### Existing R/Python functions that can be part of your implementation.
 
