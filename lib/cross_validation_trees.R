@@ -1,8 +1,14 @@
 # cross-validation
 
-cv.function <- function(features, labels, K, cp, maxdepth, reweight = FALSE){
+cv.function <- function(features, labels, K, cp, reweight = FALSE){
   
-  #set.seed(2020)
+  
+  # features: the covariates in the data: V1-VP
+  # labels: the treatment class in the data: A
+  # K: number of fold for cross-validation
+  # cp: complexity hyperparameter for decision trees
+  # reweight: boolean to determine if weights need to change
+  
   n <- dim(features)[1]
   n.fold <- round(n/K, 0)
   s <- sample(n) %% K + 1
@@ -26,14 +32,14 @@ cv.function <- function(features, labels, K, cp, maxdepth, reweight = FALSE){
     
     ## model training
     if (reweight){
-      model_train <- train(feature_train_cv, label_train_cv, w = weight_train_cv, cp, maxdepth)
+      model_train <- train(feature_train_cv, label_train_cv, w = weight_train_cv, cp)
     } else {
-      model_train <- train(feature_train_cv, label_train_cv, w = NULL, cp, maxdepth)
+      model_train <- train(feature_train_cv, label_train_cv, w = NULL, cp)
     }
     
     ## make predictions
-    prob_pred <- test(model_train, feature_test_cv, pred.type = "prob")[, 1] # index here 
-    label_pred <- ifelse(prob_pred >= 0.5, 1, 0) # index here
+    prob_pred <- test(model_train, feature_test_cv, pred.type = "prob")[, 2] # index here 
+    label_pred <- ifelse(prob_pred >= 0.5, 1, 0)
   
     cv.error[i] <- 1 - sum(weight_test_cv * (label_pred == label_test_cv)) / sum(weight_test_cv)
     tpr.fpr <- WeightedROC(prob_pred, label_test_cv, weight_test_cv)
@@ -44,8 +50,8 @@ cv.function <- function(features, labels, K, cp, maxdepth, reweight = FALSE){
 
 
 
-features = df_high[, -1:-2]
-labels = df_high[, 2]
-reweight = TRUE
-cp = 0.05
-maxdepth = 10
+#features = df_high[, -1:-2]
+#labels = df_high[, 2]
+#reweight = TRUE
+#cp = 0.05
+#maxdepth = 10

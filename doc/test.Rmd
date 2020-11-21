@@ -3,27 +3,24 @@ title: "test"
 author: "Levi Lee"
 date: "11/17/2020"
 output: pdf_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Setup
 
-## Set Working Directories and Import Data
+First, we set working directories, install required libraries and import the data. 
 
 ```{r wd}
 setwd("~/GitHub/Fall2020-Project4-group-4/doc")
 ```
 
 ```{r}
-df_high <- read.csv("../data/highDim_dataset.csv")
-df_low <- read.csv("../data/lowDim_dataset.csv")
-```
-
-
-```{r}
-packages.used <- c("ggplot2", "WeightedROC", "rpart")
+packages.used <- c("dplyr", "ggplot2", "WeightedROC", "rpart", "rpart.plot")
 
 # check packages that need to be installed.
 packages.needed <- setdiff(packages.used, intersect(installed.packages()[,1], packages.used))
@@ -33,47 +30,65 @@ if(length(packages.needed) > 0){
    install.packages(packages.needed, dependencies = TRUE)
 }
 
-
+library(dplyr)
 library(ggplot2)
 library(WeightedROC)
 library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+df_high <- read.csv("../data/highDim_dataset.csv")
+df_low <- read.csv("../data/lowDim_dataset.csv")
 ```
 
 ## Introduction 
 
+*Description*
+
+## About the Data
+
+*Description*
 
 ## Background: Trees
 
+*Description*
 
 ## Cross-Validation
 
+*Description*
 
+### Step 1: Set Controls and Establish Hyperparameters
 
-### Step 1: Set Controls
+*Description*
 
 ```{r}
 K <- 5  # number of CV folds
 sample.reweight <- TRUE # run sample reweighting in model training
 
+# setting the following to false loads data generated from a previous run
+# this data is the same in each run due to a set seed
+
 run.cv.trees_high <- FALSE # run cross-validation on the training set for trees on high dim data
-#run.train.trees_high <- TRUE # run evaluation on entire train set on high dim data
-#run.test.trees_high <- TRUE # run evaluation on an independent test set on high dim data
 
 run.cv.trees_low <- FALSE # run cross-validation on the training set for trees on low dim data
-#run.train.trees_low <- TRUE # run evaluation on entire train set on low dim data
-#run.test.trees_low <- TRUE # run evaluation on an independent test set on low dim data
 ```
 
+*Description*
 
 ```{r}
 # hyperparameters for trees
 hyper_grid_trees <- expand.grid(
-  cp = c(0.001, 0.005, 0.01, 0.05, 0.1, 0.15),
-  maxdepth = c(5, 10, 15, 20, 25, 30) 
+  cp = c(2^(0), 2^(-1), 2^(-2), 2^(-3), 2^(-4), 
+         2^(-5), 2^(-6), 2^(-7), 2^(-8), 2^(-9), 
+         2^(-10), 2^(-11), 2^(-12), 2^(-13), 2^(-14), 
+         2^(-15), 2^(-16), 2^(-17), 0, -2^(0))
 )
 ```
 
-### Step 2: Train a classification model with training features and responses
+### Step 2: Cross-Validate the Hyperparameters
+
+*Description*
 
 ```{r loadlib_trees, echo=FALSE}
 source("../lib/train_trees.R") 
@@ -81,7 +96,13 @@ source("../lib/test_trees.R")
 source("../lib/cross_validation_trees.R")
 ```
 
+*Description*
+
 ```{r features}
+# features are the predictors: V1 - Vp
+# column 1 is the response Y
+# column 2 is the treatment A
+
 feature_train_high = df_high[, -1:-2]
 label_train_high = df_high[, 2]
 
@@ -91,18 +112,19 @@ label_train_low = df_low[, 2]
 
 #### High Dimensional Data
 
+*Description*
+
 ```{r runcv_trees_high, message = FALSE, }
 set.seed(5243)
 
 if(run.cv.trees_high){
   res_cv_trees_high <- matrix(0, nrow = nrow(hyper_grid_trees), ncol = 4)
   for(i in 1:nrow(hyper_grid_trees)){
-    cat("complexity = ", hyper_grid_trees$cp[i], ", max depth = ", hyper_grid_trees$maxdepth[i],"\n", sep = "")
+    cat("complexity = ", hyper_grid_trees$cp[i], "\n", sep = "")
     res_cv_trees_high[i,] <- cv.function(features = feature_train_high, labels = label_train_high,
                                          cp = hyper_grid_trees$cp[i], 
-                                         maxdepth = hyper_grid_trees$maxdepth[i], 
                                          K, reweight = sample.reweight)
-  save(res_cv_trees_high, file="../output/res_cv_trees_high.RData")
+  save(res_cv_trees_high, file = "../output/res_cv_trees_high.RData")
   }
 }else{
   load("../output/res_cv_trees_high.RData")
@@ -111,17 +133,18 @@ if(run.cv.trees_high){
 
 #### Low Dimensional Data
 
+*Description*
+
 ```{r runcv_trees_low, message = FALSE}
 set.seed(5243)
 
 if(run.cv.trees_low){
   res_cv_trees_low <- matrix(0, nrow = nrow(hyper_grid_trees), ncol = 4)
   for(i in 1:nrow(hyper_grid_trees)){
-    cat("complexity = ", hyper_grid_trees$cp[i], ", max depth = ", hyper_grid_trees$maxdepth[i],"\n", sep = "")
-    res_cv_trees_low[i,] <- cv.function(features = feature_train_low, labels = label_train_low,
-                                         cp = hyper_grid_trees$cp[i], 
-                                         maxdepth = hyper_grid_trees$maxdepth[i], 
-                                         K, reweight = sample.reweight)
+    cat("complexity = ", hyper_grid_trees$cp[i], "\n", sep = "")
+    res_cv_trees_low[i,] <- cv.function(features = feature_train_low, labels = label_train_low, 
+                                        cp = hyper_grid_trees$cp[i], 
+                                        K, reweight = sample.reweight)
   save(res_cv_trees_low, file="../output/res_cv_trees_low.RData")
   }
 }else{
@@ -131,9 +154,13 @@ if(run.cv.trees_low){
 
 ### Step 3: Visualize CV Error and AUC
 
+*Description*
+
 #### High Dimensional Data 
 
-```{r, out.width = "65%", fig.align = 'center', echo=FALSE}
+*Description*
+
+```{r}
 # create data frame to organize results
 res_cv_trees_high <- as.data.frame(res_cv_trees_high) 
 colnames(res_cv_trees_high) <- c("mean_error", "sd_error", "mean_AUC", "sd_AUC")
@@ -141,18 +168,32 @@ cv_results_trees_high = data.frame(hyper_grid_trees, res_cv_trees_high)
 
 # look at top 5 models with highest AUC
 cv_results_trees_high[order(cv_results_trees_high$mean_AUC, decreasing = TRUE), ][1:5, ]
+```
 
-ggplot(cv_results_trees_high, aes(as.factor(maxdepth), as.factor(cp), fill = mean_error)) +
-  geom_tile() + labs(title="Mean Error Heatmap for tree models", y = "cp", x = "maxdepth")
+```{r, out.width = "85%", fig.align = 'center', echo=FALSE}
+# cross validation results for high dimensional data: mean_error 
+cv_results_trees_high %>% ggplot(aes(x = as.factor(cp), y = mean_error,
+            ymin = mean_error - sd_error, ymax = mean_error + sd_error)) + 
+  geom_crossbar() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggplot(
-  cv_results_trees_high, aes(as.factor(maxdepth), as.factor(cp), fill = mean_AUC)) +
-  geom_tile() + labs(title="Mean AUC Heatmap for tree models", y = "cp", x = "maxdepth")
+# cross validation results for high dimensional data: mean_AUC
+cv_results_trees_high %>% ggplot(aes(x = as.factor(cp), y = mean_AUC,
+            ymin = mean_AUC - sd_AUC, ymax = mean_AUC + sd_AUC)) + 
+  geom_crossbar() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+best_cp_high <- cv_results_trees_high$cp[cv_results_trees_high$mean_AUC ==
+                                           max(cv_results_trees_high$mean_AUC)]
+
+best_cp_high
 ```
 
 #### Low Dimensional Data 
 
-```{r, out.width = "65%", fig.align = 'center', echo=FALSE}
+*Description*
+
+```{r}
 # create data frame to organize results
 res_cv_trees_low <- as.data.frame(res_cv_trees_low) 
 colnames(res_cv_trees_low) <- c("mean_error", "sd_error", "mean_AUC", "sd_AUC")
@@ -160,30 +201,177 @@ cv_results_trees_low = data.frame(hyper_grid_trees, res_cv_trees_low)
 
 # look at top 5 models with lowest AUC
 cv_results_trees_low[order(cv_results_trees_low$mean_AUC, decreasing = TRUE), ][1:5, ]
+```
 
-ggplot(cv_results_trees_low, aes(as.factor(maxdepth), as.factor(cp), fill = mean_error)) +
-  geom_tile() + labs(title="Mean Error Heatmap for tree models", y = "cp", x = "maxdepth")
+```{r, out.width = "85%", fig.align = 'center', echo=FALSE}
+# cross validation results for low dimensional data: mean_error 
+cv_results_trees_low %>% ggplot(aes(x = as.factor(cp), y = mean_error,
+            ymin = mean_error - sd_error, ymax = mean_error + sd_error)) + 
+  geom_crossbar() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggplot(
-  cv_results_trees_low, aes(as.factor(maxdepth), as.factor(cp), fill = mean_AUC)) +
-  geom_tile() + labs(title="Mean AUC Heatmap for tree models", y = "cp", x = "maxdepth")
+# cross validation results for low dimensional data: mean_AUC 
+cv_results_trees_low %>% ggplot(aes(x = as.factor(cp), y = mean_AUC,
+            ymin = mean_AUC - sd_AUC, ymax = mean_AUC + sd_AUC)) + 
+  geom_crossbar() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 
+```{r}
+best_cp_low <- cv_results_trees_low$cp[cv_results_trees_low$mean_AUC ==
+                                           max(cv_results_trees_low$mean_AUC)]
+
+best_cp_low
+```
 
 ## Propensity Score Estimation
 
+*Description*
+
+```{r weights}
+# imbalanced dataset requires weights 
+# to be used in the trained model
+
+weights_high <- rep(NA, length(df_high$A))
+for (v in unique(df_high$A)){
+  weights_high[df_high$A == v] = 0.5 * length(df_high$A) / length(df_high$A[df_high$A == v])
+}
+
+
+weights_low <- rep(NA, length(df_low$A))
+for (v in unique(df_low$A)){
+  weights_low[df_low$A == v] = 0.5 * length(df_low$A) / length(df_low$A[df_low$A == v])
+}
+```
+
+#### High Dimensional Data 
+
+```{r}
+############### SET START TIME HERE 
+
+# create tree model for high dimensional data with best cp parameter
+tree_high <- rpart(A ~ . - Y, method = "class", data = df_high, cp = best_cp_high)
+
+# calculate propensity scores
+prop_score_high <- predict(tree_high, newdata = df_high[, -2], type = "prob")[, 2]
+
+############### SET END TIME HERE 
+```
+
+```{r, out.width = "85%", fig.align = 'center', echo=FALSE}
+# plot tree
+rpart.plot(tree_high, type = 1, digits = 3, fallen.leaves = TRUE)
+```
+
+#### Low Dimensional Data
+
+```{r}
+############### SET START TIME HERE 
+
+# create tree model for low dimensional data with best cp parameter
+tree_low <- rpart(A ~ . - Y, method = "class", data = df_low, cp = best_cp_low)
+
+# calculate propensity scores
+prop_score_low <- predict(tree_low, newdata = df_low[, -2], type = "prob")[, 2]
+
+############### SET END TIME HERE 
+```
+
+```{r, out.width = "85%", fig.align = 'center', echo=FALSE}
+# plot tree
+rpart.plot(tree_low, type = 1, digits = 3, fallen.leaves = TRUE)
+```
+
+## ATE Estimation
+
+*Description*
+
 ### Stratification
+
+*Description*
+
+```{r}
+K = 5
+quintiles <- seq(0, 1, by = 1/K)
+```
+
+#### High Dimensional Data 
+
+*Description*
+*Also need run times here*
+
+```{r}
+
+```
+
+
+#### Low Dimensional Data
+
+*Description*
+*Also need run times here*
+
+```{r}
+
+```
+
 
 ### Regression Adjustment
 
+*Description*
+
+#### High Dimensional Data 
+
+*Description*
+*Also need run times here*
+
+```{r}
+
+```
+
+#### Low Dimensional Data
+
+*Description*
+*Also need run times here*
+
+```{r}
+
+```
+
 ### Stratification and Regression Adjustment
 
+*Description*
+
+#### High Dimensional Data 
+
+*Description*
+*Also need run times here*
+
+```{r}
+
+```
+
+#### Low Dimensional Data
+
+*Description*
+*Also need run times here*
+
+```{r}
+
+```
 
 ## Results 
 
-*Insert Comparison Here*
+*Insert Comparison of ATE and all Runtimes Here*
+
+
+```{r}
+
+```
 
 
 ## Conclusion 
 
+*Description*
+
+## References 
+
+*Description*
