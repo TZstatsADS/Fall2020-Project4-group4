@@ -324,7 +324,14 @@ quintiles <- seq(0, 1, by = 1/K)
 *Also need run times here*
 
 ```{r}
-
+regression_adjustment_high <- rpart(A ~ . - Y, data = df_high, method = "class", cp = 7.812500e-03)
+rpart.plot(regression_adjustment_high, type = 1, digits = 3, fallen.leaves = TRUE)
+ps_RA_high <- predict(regression_adjustment_high, df_high, type = "prob")
+high_data_ps <- cbind(ps_RA_high, df_high)
+pred_high <- lm(Y ~ A + ps_RA_high, data = high_data_ps)
+summary(pred_high)
+ATE_RA_high = pred_high$coefficients[2]
+ATE_RA_high
 ```
 
 #### Low Dimensional Data
@@ -333,7 +340,14 @@ quintiles <- seq(0, 1, by = 1/K)
 *Also need run times here*
 
 ```{r}
-
+regression_adjustment_low <- rpart(A ~ . - Y, data = df_low, method = "class", cp = 7.629395e-06)
+rpart.plot(regression_adjustment_low, type = 1, digits = 3, fallen.leaves = TRUE)
+ps_RA_low <- predict(regression_adjustment_low, df_low, type = "prob")
+low_data_ps <- cbind(ps_RA_low, df_low)
+pred_low <- lm(Y ~ A + ps_RA_low, data = low_data_ps)
+summary(pred_low)
+ATE_RA_low = pred_low$coefficients[2]
+ATE_RA_low
 ```
 
 ### Stratification and Regression Adjustment
