@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 First, we set working directories, install required libraries and import the data. 
 
 ```{r wd}
-setwd("C:/Users/Charlie/Documents/GitHub/Fall2020-Project4-group-4")
+setwd("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4")
 ```
 
 ```{r}
@@ -39,29 +39,28 @@ library(base)
 ```
 
 ```{r}
-df_high <- read.csv("../data/highDim_dataset.csv")
-df_low <- read.csv("../data/lowDim_dataset.csv")
+df_high <- read.csv("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/data/highDim_dataset.csv")
+df_low <- read.csv("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/data/lowDim_dataset.csv")
 ```
-
 ## Introduction 
 
-*Description*
+In this project, we are looking for the best algorithm method for causal inference of propensity scores to see how close the estimated ATEs and true ATEs would be. The algorithms we use to compare ATE in this project are regression adjustment, stratification, and the combination of them. For the estimation of propensity score, we use the regression trees. The results of estimated ATE of best algorhitms, combination of stratification and regression adjustment, are -2.504545 for high dimension data set and 3.058512 for low dimension data set, which are really closed to the true ATE: -2.5 for high dimension and 3 for low dimension. We notice that regression adjustment also performs well on estimating the ATEs: 3.05324 for low dimension and -2.527116 for high dimension. However, the estimated ATEs of stratification are significantly different from the true value. 
 
 ## About the Data
 
-*Description*
+There are two attached data set for this project, named *highDim_dataset* and *lowDim_dataset*. For high dimension data, there are 2000 observations, 185 variables, 1 treatment indicator and 1 response variable. For low dimension data, there are 475 observations, 22 variables, 1 treatment indicator and 1 response variable
 
 ## Background: Trees
 
-*Description*
+Regression tree is the method we used for estimating propensity scores. In this project, regression tree is designed for classification for the quantile of propensity score. The tree seperated by every variable which will significantly influence the quantile that the propensity scores will falls in. The more layers tree has, the more precise quantile and propensity score will be.
 
 ## Cross-Validation
 
-*Description*
+ Usually we make a 5-folds cross validation for stratification.
 
 ### Step 1: Set Controls and Establish Hyperparameters
 
-*Description*
+In order to get a balanced tree model, which is neither too much layers or too much bias, we need to find the best hyperparameter for the tree.
 
 ```{r}
 K <- 5  # number of CV folds
@@ -75,7 +74,7 @@ run.cv.trees_high <- FALSE # run cross-validation on the training set for trees 
 run.cv.trees_low <- FALSE # run cross-validation on the training set for trees on low dim data
 ```
 
-*Description*
+The index of power shows the layers we may want to check.
 
 ```{r}
 # hyperparameters for trees
@@ -89,15 +88,14 @@ hyper_grid_trees <- expand.grid(
 
 ### Step 2: Cross-Validate the Hyperparameters
 
-*Description*
+The hyperparameter affects the performance of regression tree model which will directly influence the results of propensity scores. To get the best hyperparameter, we need to check the mean AUC and mean error of model under different hyperparameter value.
 
 ```{r loadlib_trees, echo=FALSE}
-source("../lib/train_trees.R") 
-source("../lib/test_trees.R")
-source("../lib/cross_validation_trees.R")
+source("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/lib/train_trees.R") 
+source("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/lib/test_trees.R")
+source("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/lib/cross_validation_trees.R")
 ```
 
-*Description*
 
 ```{r features}
 # features are the predictors: V1 - Vp
@@ -113,7 +111,7 @@ label_train_low = df_low[, 2]
 
 #### High Dimensional Data
 
-*Description*
+Creating the cross validation for high dimension.
 
 ```{r runcv_trees_high, message = FALSE, }
 set.seed(5243)
@@ -125,16 +123,16 @@ if(run.cv.trees_high){
     res_cv_trees_high[i,] <- cv.function(features = feature_train_high, labels = label_train_high,
                                          cp = hyper_grid_trees$cp[i], 
                                          K, reweight = sample.reweight)
-  save(res_cv_trees_high, file = "../output/res_cv_trees_high.RData")
+  save(res_cv_trees_high, file = "C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/output/res_cv_trees_high.RData")
   }
 }else{
-  load("../output/res_cv_trees_high.RData")
+  load("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/output/res_cv_trees_high.RData")
 }
 ```
 
 #### Low Dimensional Data
 
-*Description*
+Creating the cross validation for low dimension.
 
 ```{r runcv_trees_low, message = FALSE}
 set.seed(5243)
@@ -146,20 +144,20 @@ if(run.cv.trees_low){
     res_cv_trees_low[i,] <- cv.function(features = feature_train_low, labels = label_train_low, 
                                         cp = hyper_grid_trees$cp[i], 
                                         K, reweight = sample.reweight)
-  save(res_cv_trees_low, file="../output/res_cv_trees_low.RData")
+  save(res_cv_trees_low, file="C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/output/res_cv_trees_low.RData")
   }
 }else{
-  load("../output/res_cv_trees_low.RData")
+  load("C:/Users/wuyam/Desktop/Fall2020-Project4-group-4/output/res_cv_trees_low.RData")
 }
 ```
 
 ### Step 3: Visualize CV Error and AUC
 
-*Description*
+In this section, we will use the bar plot to figure out the highest mean AUC and its complex parameter.
 
 #### High Dimensional Data 
 
-*Description*
+The best complex parameter for high dimension data is  0.0078125.
 
 ```{r}
 # create data frame to organize results
@@ -192,7 +190,7 @@ best_cp_high
 
 #### Low Dimensional Data 
 
-*Description*
+The best complex parameter for low dimension data is  7.629395e-06.
 
 ```{r}
 # create data frame to organize results
@@ -226,7 +224,7 @@ best_cp_low
 
 ## Propensity Score Estimation
 
-*Description*
+In this section, we will use regression tree to get our propensity score based on the variables from two datasets.
 
 ```{r weights}
 # imbalanced dataset requires weights 
@@ -288,11 +286,12 @@ rpart.plot(tree_low, type = 1, digits = 3, fallen.leaves = TRUE)
 
 ## ATE Estimation
 
-*Description*
+$$\Delta=E(Y_1-Y_0)=E(Y_1)-E(Y_0)$$
+This is the formula of Average Treatment Effect(ATE). We use it for control experiment. ATE can measure the average difference of results between the control group and treating group.
 
 ### Stratification
 
-*Description*
+we divide the whole propensity score into 5 strata. In each strata, we calculate the mean propensity score of control group and treating group, and then we calculate the difference of mean propensity scores of two groups of each strata. Finally, we calcualte the weighted average of mean difference of 5 stratas.
 
 ```{r}
 K = 5
@@ -301,8 +300,8 @@ quintiles <- seq(0, 1, by = 1/K)
 
 #### High Dimensional Data 
 
-*Description*
-
+The ATE of high dimension is -1.87638.  
+Runtime of high dimension is 0.621835 secs.
 
 ```{r}
 start.time_stratification_high <- Sys.time()
@@ -386,7 +385,8 @@ time_stratification_high
 
 #### Low Dimensional Data
 
-*Description*
+The ATE of low dimension is 2.662275.  
+Runtime of low dimension is 0.4974492 secs.
 
 
 ```{r}
@@ -472,11 +472,12 @@ time_stratification_low
 
 ### Regression Adjustment
 
-*Description*
+The ATE of propensity scores under this method is the coefficients of linear regression of the whole propensity scores. The coefficients of treatment indicator show how much the treatment will affects the reponse variable.
 
 #### High Dimensional Data 
 
-*Description*
+The ATE of high dimension is -2.527116.  
+Runtime of high dimension is 0.06682205 secs.
 
 
 ```{r}
@@ -496,7 +497,8 @@ time_regression_adjustment_high
 
 #### Low Dimensional Data
 
-*Description*
+The ATE of low dimension is 3.05324 .  
+Runtime of low dimension is 0.06382895 secs.
 
 
 ```{r}
@@ -516,11 +518,12 @@ time_regression_adjustment_low
 
 ### Stratification and Regression Adjustment
 
-*Description*
+In this section, we will combine two algorithms together. Fist, we will divide the data into 5 stratas by stratification, then we will do regression adjustment for each strata. Finally, calculate the weighted average of all stratas.
 
 #### High Dimensional Data 
 
-*Description*
+The ATE of high dimension is -2.504545 .  
+Runtime of high dimension is 0.158493 secs.
 
 
 ```{r}
@@ -563,7 +566,8 @@ time_stratification_regression_adjustment_high
 
 #### Low Dimensional Data
 
-*Description*
+The ATE of low dimension is 3.058512.  
+Runtime of low dimension is 0.1477561 secs.
 
 
 ```{r}
@@ -641,7 +645,7 @@ Runtimes of propensity Score Estimation for high dimensional data is 0.704 secon
 Among three methods, Stratification + Regression has the shortest runtimes: 0.284 seconds for high dimensinal data, and 0.335 seconds for low dimensional data.
 
 By comparing ATE from three methods with the true ATE, we concluded that regression adjustment is the best method which estimates ATE for high dimensional data and low dimensional data that are the closest to the true ATEs.
-*Description*
+
 
 ## References 
 
