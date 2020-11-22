@@ -1,7 +1,7 @@
 ---
-title: "test"
-author: "Levi Lee"
-date: "11/17/2020"
+title: "Project 4: Causal Inference Algorithms Evaluation"
+author: "Group 4: Zhenglei Chen, Jaival Desai, Qinzhe Hu, Levi Lee, Luyao Sun, Xinyi Wei"
+date: "12/02/2020"
 output: pdf_document
 editor_options: 
   chunk_output_type: console
@@ -297,20 +297,167 @@ quintiles <- seq(0, 1, by = 1/K)
 #### High Dimensional Data 
 
 *Description*
-*Also need run times here*
+
 
 ```{r}
+############### SET START TIME HERE 
 
+df_high <- cbind(df_high, prop_score_high)
+quintile_values_high <- rep(NA, length(quintiles))
+  
+for (i in 1:length(quintiles)){
+  quintile_values_high[i] <- quantile(prop_score_high, quintiles[i])
+}
+
+# values of quintiles for high data
+quintile_values_high
+
+df_high$quintile_class_high <- rep(NA, nrow(df_high))
+
+# assign quintile class to each observation
+for (i in 1:nrow(df_high)){
+  if ((quintile_values_high[1] <= df_high$prop_score_high[i]) & 
+      (df_high$prop_score_high[i] < quintile_values_high[2])) {
+    df_high$quintile_class_high[i] <- 1
+  } else if ((quintile_values_high[2] <= df_high$prop_score_high[i]) & 
+             (df_high$prop_score_high[i] < quintile_values_high[3])) {
+    df_high$quintile_class_high[i] <- 2
+  } else if ((quintile_values_high[3] <= df_high$prop_score_high[i]) & 
+             (df_high$prop_score_high[i] < quintile_values_high[4])) {
+    df_high$quintile_class_high[i] <- 3 
+  } else if ((quintile_values_high[4] <= df_high$prop_score_high[i]) & 
+             (df_high$prop_score_high[i] < quintile_values_high[5])) {
+    df_high$quintile_class_high[i] <- 4
+  } else if ((quintile_values_high[5] <= df_high$prop_score_high[i]) & 
+             (df_high$prop_score_high[i] <= quintile_values_high[6])) {
+    df_high$quintile_class_high[i] <- 5
+  }
+}
+
+summary_high = expand.grid(
+  A = c(0, 1), 
+  quintile = c(1, 2, 3, 4, 5), 
+  n = NA, 
+  prop = NA, 
+  avg_y = NA
+)
+
+for (i in 1:nrow(summary_high)) {
+  subset <- df_high[(df_high$A == summary_high$A[i]) & (df_high$quintile_class_high == summary_high$quintile[i]), ]
+  summary_high$n[i] = nrow(subset)
+  summary_high$prop[i] = summary_high$n[i]/nrow(df_high)
+  summary_high$avg_y[i] = mean(subset$Y)
+}
+
+
+for (i in 1:nrow(summary_high)) {
+  if (is.nan(summary_high$avg_y[i]) == TRUE) {
+    summary_high$avg_y[i] <- 0 
+  }
+}
+
+# this table records the mean response in each quintile; needed for stratification
+summary_high
+
+quntile_prop_high <- summary_high %>% group_by(quintile) %>% summarise(sum = sum(n)/nrow(df_high))
+
+# this table records the proportions for each quintile; also needed for stratification
+quntile_prop_high
+
+ATE_stratification_high = quntile_prop_high$sum[1]*(summary_high$avg_y[2] - summary_high$avg_y[1]) + 
+  quntile_prop_high$sum[2]*(summary_high$avg_y[4] - summary_high$avg_y[3]) + 
+  quntile_prop_high$sum[3]*(summary_high$avg_y[6] - summary_high$avg_y[5]) + 
+  quntile_prop_high$sum[4]*(summary_high$avg_y[8] - summary_high$avg_y[7]) + 
+  quntile_prop_high$sum[5]*(summary_high$avg_y[10] - summary_high$avg_y[9])
+
+
+ATE_stratification_high
+
+############### SET END TIME HERE 
 ```
 
 
 #### Low Dimensional Data
 
 *Description*
-*Also need run times here*
+
 
 ```{r}
+############### SET START TIME HERE 
 
+df_low <- cbind(df_low, prop_score_low)
+quintile_values_low <- rep(NA, length(quintiles))
+
+for (i in 1:length(quintiles)){
+  quintile_values_low[i] <- quantile(prop_score_low, quintiles[i])
+}
+
+# values of quintiles for low data
+quintile_values_low
+
+df_low$quintile_class_low <- rep(NA, nrow(df_low))
+
+# assign quintile class to each observation
+for (i in 1:nrow(df_low)){
+  if ((quintile_values_low[1] <= df_low$prop_score_low[i]) & 
+      (df_low$prop_score_low[i] < quintile_values_low[2])) {
+    df_low$quintile_class_low[i] <- 1
+  } else if ((quintile_values_low[2] <= df_low$prop_score_low[i]) & 
+             (df_low$prop_score_low[i] < quintile_values_low[3])) {
+    df_low$quintile_class_low[i] <- 2
+  } else if ((quintile_values_low[3] <= df_low$prop_score_low[i]) & 
+             (df_low$prop_score_low[i] < quintile_values_low[4])) {
+    df_low$quintile_class_low[i] <- 3 
+  } else if ((quintile_values_low[4] <= df_low$prop_score_low[i]) & 
+             (df_low$prop_score_low[i] < quintile_values_low[5])) {
+    df_low$quintile_class_low[i] <- 4
+  } else if ((quintile_values_low[5] <= df_low$prop_score_low[i]) & 
+             (df_low$prop_score_low[i] <= quintile_values_low[6])) {
+    df_low$quintile_class_low[i] <- 5
+  }
+}
+
+
+summary_low = expand.grid(
+  A = c(0, 1), 
+  quintile = c(1, 2, 3, 4, 5), 
+  n = NA, 
+  prop = NA, 
+  avg_y = NA
+)
+
+for (i in 1:nrow(summary_low)) {
+  subset <- df_low[(df_low$A == summary_low$A[i]) & 
+                     (df_low$quintile_class_low == summary_low$quintile[i]), ]
+  summary_low$n[i] = nrow(subset)
+  summary_low$prop[i] = summary_low$n[i]/nrow(df_low)
+  summary_low$avg_y[i] = mean(subset$Y)
+}
+
+
+for (i in 1:nrow(summary_low)) {
+  if (is.nan(summary_low$avg_y[i]) == TRUE) {
+    summary_low$avg_y[i] <- 0 
+  }
+}
+
+# this table records the mean response in each quintile; needed for stratification
+summary_low
+
+quntile_prop_low <- summary_low %>% group_by(quintile) %>% summarise(sum = sum(n)/nrow(df_low))
+
+# this table records the proportions for each quintile; also needed for stratification
+quntile_prop_low
+
+ATE_stratification_low = quntile_prop_low$sum[1]*(summary_low$avg_y[2] - summary_low$avg_y[1]) + 
+  quntile_prop_low$sum[2]*(summary_low$avg_y[4] - summary_low$avg_y[3]) + 
+  quntile_prop_low$sum[3]*(summary_low$avg_y[6] - summary_low$avg_y[5]) + 
+  quntile_prop_low$sum[4]*(summary_low$avg_y[8] - summary_low$avg_y[7]) + 
+  quntile_prop_low$sum[5]*(summary_low$avg_y[10] - summary_low$avg_y[9])
+
+ATE_stratification_low
+
+############### SET END TIME HERE 
 ```
 
 
@@ -321,33 +468,37 @@ quintiles <- seq(0, 1, by = 1/K)
 #### High Dimensional Data 
 
 *Description*
-*Also need run times here*
+
 
 ```{r}
-regression_adjustment_high <- rpart(A ~ . - Y, data = df_high, method = "class", cp = 7.812500e-03)
-rpart.plot(regression_adjustment_high, type = 1, digits = 3, fallen.leaves = TRUE)
-ps_RA_high <- predict(regression_adjustment_high, df_high, type = "prob")
+############### SET START TIME HERE 
+
+ps_RA_high <- predict(tree_high, df_high, type = "prob")
 high_data_ps <- cbind(ps_RA_high, df_high)
 pred_high <- lm(Y ~ A + ps_RA_high, data = high_data_ps)
 summary(pred_high)
-ATE_RA_high = pred_high$coefficients[2]
-ATE_RA_high
+ATE_regression_adjustment_high = pred_high$coefficients[2]
+ATE_regression_adjustment_high
+
+############### SET END TIME HERE 
 ```
 
 #### Low Dimensional Data
 
 *Description*
-*Also need run times here*
+
 
 ```{r}
-regression_adjustment_low <- rpart(A ~ . - Y, data = df_low, method = "class", cp = 7.629395e-06)
-rpart.plot(regression_adjustment_low, type = 1, digits = 3, fallen.leaves = TRUE)
-ps_RA_low <- predict(regression_adjustment_low, df_low, type = "prob")
+############### SET START TIME HERE 
+
+ps_RA_low <- predict(tree_low, df_low, type = "prob")
 low_data_ps <- cbind(ps_RA_low, df_low)
 pred_low <- lm(Y ~ A + ps_RA_low, data = low_data_ps)
 summary(pred_low)
-ATE_RA_low = pred_low$coefficients[2]
-ATE_RA_low
+ATE_regression_adjustment_low = pred_low$coefficients[2]
+ATE_regression_adjustment_low
+
+############### SET END TIME HERE 
 ```
 
 ### Stratification and Regression Adjustment
@@ -357,30 +508,93 @@ ATE_RA_low
 #### High Dimensional Data 
 
 *Description*
-*Also need run times here*
+
 
 ```{r}
+############### SET START TIME HERE 
 
+lm_beta_high <- rep(NA, K)
+
+for (i in 1:K){
+  subset <- df_high[df_high$quintile_class_high == i, ]
+  
+  if (nrow(subset) == 0) { 
+    # if the quintile is empty, let the coefficient for A automatically be 0
+    lm_beta_high[i] <- 0
+  } else if (sum(subset$prop_score_high) == 0) { 
+    # if the propensity scores in the quintile are all 0, let the coefficient for A automatically be 0
+    lm_beta_low[i] <- 0
+  } else {
+    # otherwise, run a linear model on the subset
+    lm <- lm(Y ~ A + prop_score_high, data = subset)
+    lm_beta_high[i] <- as.numeric(lm$coefficients[2])
+  }
+}
+
+lm_beta_high 
+
+
+ATE_stratification_regression_adjustment_high <- quntile_prop_high$sum[1]*lm_beta_high[1] + 
+  quntile_prop_high$sum[2]*lm_beta_high[2] + 
+  quntile_prop_high$sum[3]*lm_beta_high[3] + 
+  quntile_prop_high$sum[4]*lm_beta_high[4] + 
+  quntile_prop_high$sum[5]*lm_beta_high[5]
+
+
+ATE_stratification_regression_adjustment_high
+
+############### SET END TIME HERE 
 ```
 
 #### Low Dimensional Data
 
 *Description*
-*Also need run times here*
+
 
 ```{r}
+############### SET START TIME HERE 
 
+lm_beta_low <- rep(NA, 5)
+
+for (i in 1:K){
+  subset <- df_low[df_low$quintile_class_low == i, ]
+  
+  if (nrow(subset) == 0) {
+    # if the quintile is empty, let the coefficient for A automatically be 0
+    lm_beta_low[i] <- 0
+  } else if (sum(subset$prop_score_low) == 0) {
+    # if the propensity scores in the quintile are all 0, let the coefficient for A automatically be 0
+    lm_beta_low[i] <- 0
+  } else {
+    # otherwise, run a linear model on the subset
+    lm <- lm(Y ~ A + prop_score_low, data = subset)
+    lm_beta_low[i] <- as.numeric(lm$coefficients[2])
+  }
+}
+
+lm_beta_low 
+
+ATE_stratification_regression_adjustment_low <- quntile_prop_low$sum[1]*lm_beta_low[1] + 
+  quntile_prop_low$sum[2]*lm_beta_low[2] + 
+  quntile_prop_low$sum[3]*lm_beta_low[3] + 
+  quntile_prop_low$sum[4]*lm_beta_low[4] + 
+  quntile_prop_low$sum[5]*lm_beta_low[5]
+
+ATE_stratification_regression_adjustment_low
+
+############### SET END TIME HERE 
 ```
 
 ## Results 
 
 *Insert Comparison of ATE and all Runtimes Here*
-
+*8 Runtime values*
+*6 ATE estimations + 2 true ATE*
+*create table and analyze results*
 
 ```{r}
 
 ```
-
 
 ## Conclusion 
 

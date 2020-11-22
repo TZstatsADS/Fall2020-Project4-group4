@@ -10,4 +10,9 @@ test.Rmd & test.pdf
 
 	A cumulative report that describes our methods for prosensity score estimation and ATE estimation. 
 
+Temporary files: 
+
+.Rhistory
+
+	A temporary files that stores the history of actions done on the .Rmd file
 
