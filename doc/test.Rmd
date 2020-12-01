@@ -1,9 +1,12 @@
 ---
-title: "Project 4: Causal Inference Algorithms Evaluation"
-author: "Group 4: Zhenglei Chen, Jaival Desai, Qinzhe Hu, Levi Lee, Luyao Sun, Xinyi Wei"
+title: 'Project 4: Causal Inference Algorithms Evaluation'
+author: 'Group 4: Zhenglei Chen, Jaival Desai, Qinzhe Hu, Levi Lee, Luyao Sun, Xinyi
+  Wei'
 date: "12/02/2020"
-output: pdf_document
-editor_options: 
+output:
+  html_document:
+    df_print: paged
+editor_options:
   chunk_output_type: console
 ---
 
@@ -319,11 +322,137 @@ With the estimated propensity scores on hand, we propose, explain, and discuss t
 
 ### Stratification
 
+In the stratification method, we are trying to achieve groups where propensity scores hold approximately. For choosing quantiles, the use of quantiles (K=5) was advocated by Rosenbaum and Rubin, however, choosing K=5 will lead to empty stratum for both high and low dimensional data. 
+```{r include=FALSE}
+K = 5
+strata <- seq(0, 1, by = 1/K)
+df_high_k5 <- cbind(df_high, prop_score_high)
+stratum_values_high <- rep(NA, length(strata))
+  
+for (i in 1:length(strata)){
+  stratum_values_high[i] <- quantile(prop_score_high, strata[i])
+}
+
+# values of strata for high data
+stratum_values_high
+
+df_high_k5$stratum_class_high <- rep(NA, nrow(df_high_k5))
+
+# assign stratum class to each observation
+for (i in 1:nrow(df_high_k5)){
+  if ((stratum_values_high[1] <= df_high_k5$prop_score_high[i]) & 
+      (df_high_k5$prop_score_high[i] < stratum_values_high[2])) {
+    df_high_k5$stratum_class_high[i] <- 1
+  } else if ((stratum_values_high[2] <= df_high_k5$prop_score_high[i]) & 
+             (df_high_k5$prop_score_high[i] < stratum_values_high[3])) {
+    df_high_k5$stratum_class_high[i] <- 2
+  } else if ((stratum_values_high[3] <= df_high_k5$prop_score_high[i]) & 
+             (df_high_k5$prop_score_high[i] <= stratum_values_high[4])) {
+    df_high_k5$stratum_class_high[i] <- 3 
+  } else if ((stratum_values_high[4] <= df_high_k5$prop_score_high[i]) & 
+             (df_high_k5$prop_score_high[i] <= stratum_values_high[5])) {
+    df_high_k5$stratum_class_high[i] <- 4
+  } else if ((stratum_values_high[5] <= df_high_k5$prop_score_high[i]) & 
+             (df_high_k5$prop_score_high[i] <= stratum_values_high[6])) {
+    df_high_k5$stratum_class_high[i] <- 5 
+  }
+}
+
+summary_high_k5 = expand.grid(
+  A = c(0, 1), 
+  stratum = seq(1, K, by = 1), 
+  n = NA, 
+  prop = NA, 
+  avg_y = NA
+)
+
+for (i in 1:nrow(summary_high_k5)) {
+  subset <- df_high_k5[(df_high_k5$A == summary_high_k5$A[i]) & 
+                      (df_high_k5$stratum_class_high == summary_high_k5$stratum[i]), ]
+  summary_high_k5$n[i] = nrow(subset)
+  summary_high_k5$prop[i] = summary_high_k5$n[i]/nrow(df_high_k5)
+  summary_high_k5$avg_y[i] = mean(subset$Y)
+}
 
 
+for (i in 1:nrow(summary_high_k5)) {
+  if (is.nan(summary_high_k5$avg_y[i]) == TRUE) {
+    summary_high_k5$avg_y[i] <- 0 
+  }
+}
+```
+
+```{r include=FALSE}
+K = 5
+strata <- seq(0, 1, by = 1/K)
+df_low_k5 <- cbind(df_low, prop_score_low)
+stratum_values_low <- rep(NA, length(strata))
+  
+for (i in 1:length(strata)){
+  stratum_values_low[i] <- quantile(prop_score_low, strata[i])
+}
+
+# values of strata for low data
+stratum_values_low
+
+df_low_k5$stratum_class_low <- rep(NA, nrow(df_low_k5))
+
+# assign stratum class to each observation
+for (i in 1:nrow(df_low_k5)){
+  if ((stratum_values_low[1] <= df_low_k5$prop_score_low[i]) & 
+      (df_low_k5$prop_score_low[i] < stratum_values_low[2])) {
+    df_low_k5$stratum_class_low[i] <- 1
+  } else if ((stratum_values_low[2] <= df_low_k5$prop_score_low[i]) & 
+             (df_low_k5$prop_score_low[i] < stratum_values_low[3])) {
+    df_low_k5$stratum_class_low[i] <- 2
+  } else if ((stratum_values_low[3] <= df_low_k5$prop_score_low[i]) & 
+             (df_low_k5$prop_score_low[i] <= stratum_values_low[4])) {
+    df_low_k5$stratum_class_low[i] <- 3 
+  } else if ((stratum_values_low[4] <= df_low_k5$prop_score_low[i]) & 
+             (df_low_k5$prop_score_low[i] <= stratum_values_low[5])) {
+    df_low_k5$stratum_class_low[i] <- 4
+  } else if ((stratum_values_low[5] <= df_low_k5$prop_score_low[i]) & 
+             (df_low_k5$prop_score_low[i] <= stratum_values_low[6])) {
+    df_low_k5$stratum_class_low[i] <- 5 
+  }
+}
+
+summary_low_k5 = expand.grid(
+  A = c(0, 1), 
+  stratum = seq(1, K, by = 1), 
+  n = NA, 
+  prop = NA, 
+  avg_y = NA
+)
+
+for (i in 1:nrow(summary_low_k5)) {
+  subset <- df_low_k5[(df_low_k5$A == summary_low_k5$A[i]) & 
+                      (df_low_k5$stratum_class_low == summary_low_k5$stratum[i]), ]
+  summary_low_k5$n[i] = nrow(subset)
+  summary_low_k5$prop[i] = summary_low_k5$n[i]/nrow(df_low_k5)
+  summary_low_k5$avg_y[i] = mean(subset$Y)
+}
 
 
+for (i in 1:nrow(summary_low_k5)) {
+  if (is.nan(summary_low_k5$avg_y[i]) == TRUE) {
+    summary_low_k5$avg_y[i] <- 0 
+  }
+}
+```
 
+
+```{r}
+# When K=5, the second stratus of high and low dimensional data are both empty, but we need to make sure each stratum consists at least one object
+summary_high_k5
+summary_low_k5
+```
+
+Therefore we choose K=3 strata , which is the highest value of K that do not produce empty stratum. Then we can estimate ATE between treated and untreated subgroups by following formula:
+
+![](../figs/formula_strat.png)
+
+The advantage of stratification is that it controls systematic differences between the control and treated groups. However, as we mentioned earlier, stratification has balance issues in each stratum, in some extreme cases, some strata may contain subjects from only the treated group or control group, it is impossible to estimate treatment effect. What’s more, Lunceford and Davidian (2004) demonstrated that stratification results in estimates of average treatment effects with greater bias than does a variety of weighted estimators.
 
 ```{r}
 K = 3
