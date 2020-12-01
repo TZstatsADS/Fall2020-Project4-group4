@@ -13,13 +13,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Setup
 
-First, we set working directories, install required libraries and import the data. 
+First, we set working directories as needed, install required libraries and import the data. 
 
-```{r wd}
-setwd("~/GitHub/Fall2020-Project4-group-4/doc")
+```{r wd, warning = FALSE, message = FALSE, echo = FALSE}
+#setwd("~/GitHub/Fall2020-Project4-group-4/doc")
 ```
 
-```{r}
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
 packages.used <- c("dplyr", "ggplot2", "WeightedROC", "rpart", "rpart.plot")
 
 # check packages that need to be installed.
@@ -42,7 +42,9 @@ library(base)
 df_high <- read.csv("../data/highDim_dataset.csv")
 df_low <- read.csv("../data/lowDim_dataset.csv")
 ```
+
 ## Introduction 
+
 
 
 
@@ -50,7 +52,9 @@ df_low <- read.csv("../data/lowDim_dataset.csv")
 
 
 
-## Background: Trees
+
+## Background on Classification/Regression Trees
+
 
 
 
@@ -58,7 +62,9 @@ df_low <- read.csv("../data/lowDim_dataset.csv")
 
 
 
+
 ### Step 1: Set Controls and Establish Hyperparameters
+
 
 
 
@@ -73,6 +79,7 @@ run.cv.trees_high <- FALSE # run cross-validation on the training set for trees 
 
 run.cv.trees_low <- FALSE # run cross-validation on the training set for trees on low dim data
 ```
+
 
 
 
@@ -112,8 +119,6 @@ label_train_low = df_low[, 2]
 
 #### High Dimensional Data
 
-
-
 ```{r runcv_trees_high, message = FALSE, }
 set.seed(5243)
 
@@ -121,18 +126,18 @@ if(run.cv.trees_high){
   res_cv_trees_high <- matrix(0, nrow = nrow(hyper_grid_trees), ncol = 4)
   for(i in 1:nrow(hyper_grid_trees)){
     cat("complexity = ", hyper_grid_trees$cp[i], "\n", sep = "")
-    res_cv_trees_high[i,] <- cv.function(features = feature_train_high, labels = label_train_high,
+    res_cv_trees_high[i,] <- cv.function(features = feature_train_high, 
+                                         labels = label_train_high,
                                          cp = hyper_grid_trees$cp[i], 
                                          K, reweight = sample.reweight)
   save(res_cv_trees_high, file = "../output/res_cv_trees_high.RData")
   }
-}else{
+} else{
   load("../output/res_cv_trees_high.RData")
 }
 ```
 
 #### Low Dimensional Data
-
 
 ```{r runcv_trees_low, message = FALSE}
 set.seed(5243)
@@ -141,7 +146,8 @@ if(run.cv.trees_low){
   res_cv_trees_low <- matrix(0, nrow = nrow(hyper_grid_trees), ncol = 4)
   for(i in 1:nrow(hyper_grid_trees)){
     cat("complexity = ", hyper_grid_trees$cp[i], "\n", sep = "")
-    res_cv_trees_low[i,] <- cv.function(features = feature_train_low, labels = label_train_low, 
+    res_cv_trees_low[i,] <- cv.function(features = feature_train_low, 
+                                        labels = label_train_low, 
                                         cp = hyper_grid_trees$cp[i], 
                                         K, reweight = sample.reweight)
   save(res_cv_trees_low, file="../output/res_cv_trees_low.RData")
@@ -156,10 +162,6 @@ if(run.cv.trees_low){
 
 
 #### High Dimensional Data 
-
-
-
-
 
 ```{r}
 # create data frame to organize results
@@ -182,7 +184,7 @@ cv_results_trees_high %>%
             ymin = mean_error - sd_error, 
             ymax = mean_error + sd_error)) + 
   labs(title="Mean of Error with Different cp Values for High Dimensional Data ",
-       x="cp", y = "Mean of Error")+
+       x="cp", y = "Mean of Error") +
   geom_crossbar() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # cross validation results for high dimensional data: mean_AUC
@@ -202,10 +204,6 @@ best_cp_high
 ```
 
 #### Low Dimensional Data 
-
-
-
-
 
 ```{r}
 # create data frame to organize results
@@ -267,8 +265,6 @@ for (v in unique(df_low$A)){
 
 #### High Dimensional Data 
 
-
-
 ```{r}
 start.time_propensity_score_high <- Sys.time()
 
@@ -311,60 +307,55 @@ rpart.plot(tree_low, type = 1, digits = 3, fallen.leaves = TRUE)
 
 ## ATE Estimation
 
-
-
+With the estimated propensity scores on hand, we propose, explain, and discuss the pros and cons of three different ATE estimation algorithms: stratification, regression adjustment, and stratification plus regression adjustment together. 
 
 ### Stratification
 
 
 
+
+
+
+
 ```{r}
-K = 5
-quintiles <- seq(0, 1, by = 1/K)
+K = 3
+strata <- seq(0, 1, by = 1/K)
 ```
 
 #### High Dimensional Data 
-
-
 
 ```{r}
 start.time_stratification_high <- Sys.time()
 
 df_high <- cbind(df_high, prop_score_high)
-quintile_values_high <- rep(NA, length(quintiles))
+stratum_values_high <- rep(NA, length(strata))
   
-for (i in 1:length(quintiles)){
-  quintile_values_high[i] <- quantile(prop_score_high, quintiles[i])
+for (i in 1:length(strata)){
+  stratum_values_high[i] <- quantile(prop_score_high, strata[i])
 }
 
-# values of quintiles for high data
-quintile_values_high
+# values of strata for high data
+stratum_values_high
 
-df_high$quintile_class_high <- rep(NA, nrow(df_high))
+df_high$stratum_class_high <- rep(NA, nrow(df_high))
 
-# assign quintile class to each observation
+# assign stratum class to each observation
 for (i in 1:nrow(df_high)){
-  if ((quintile_values_high[1] <= df_high$prop_score_high[i]) & 
-      (df_high$prop_score_high[i] < quintile_values_high[2])) {
-    df_high$quintile_class_high[i] <- 1
-  } else if ((quintile_values_high[2] <= df_high$prop_score_high[i]) & 
-             (df_high$prop_score_high[i] < quintile_values_high[3])) {
-    df_high$quintile_class_high[i] <- 2
-  } else if ((quintile_values_high[3] <= df_high$prop_score_high[i]) & 
-             (df_high$prop_score_high[i] < quintile_values_high[4])) {
-    df_high$quintile_class_high[i] <- 3 
-  } else if ((quintile_values_high[4] <= df_high$prop_score_high[i]) & 
-             (df_high$prop_score_high[i] < quintile_values_high[5])) {
-    df_high$quintile_class_high[i] <- 4
-  } else if ((quintile_values_high[5] <= df_high$prop_score_high[i]) & 
-             (df_high$prop_score_high[i] <= quintile_values_high[6])) {
-    df_high$quintile_class_high[i] <- 5
+  if ((stratum_values_high[1] <= df_high$prop_score_high[i]) & 
+      (df_high$prop_score_high[i] < stratum_values_high[2])) {
+    df_high$stratum_class_high[i] <- 1
+  } else if ((stratum_values_high[2] <= df_high$prop_score_high[i]) & 
+             (df_high$prop_score_high[i] < stratum_values_high[3])) {
+    df_high$stratum_class_high[i] <- 2
+  } else if ((stratum_values_high[3] <= df_high$prop_score_high[i]) & 
+             (df_high$prop_score_high[i] <= stratum_values_high[4])) {
+    df_high$stratum_class_high[i] <- 3 
   }
 }
 
 summary_high = expand.grid(
   A = c(0, 1), 
-  quintile = seq(1, K, by = 1), 
+  stratum = seq(1, K, by = 1), 
   n = NA, 
   prop = NA, 
   avg_y = NA
@@ -372,7 +363,7 @@ summary_high = expand.grid(
 
 for (i in 1:nrow(summary_high)) {
   subset <- df_high[(df_high$A == summary_high$A[i]) & 
-                      (df_high$quintile_class_high == summary_high$quintile[i]), ]
+                      (df_high$stratum_class_high == summary_high$stratum[i]), ]
   summary_high$n[i] = nrow(subset)
   summary_high$prop[i] = summary_high$n[i]/nrow(df_high)
   summary_high$avg_y[i] = mean(subset$Y)
@@ -385,20 +376,17 @@ for (i in 1:nrow(summary_high)) {
   }
 }
 
-# this table records the mean response in each quintile; needed for stratification
+# this table records the mean response in each stratum; needed for stratification
 summary_high
 
-quntile_prop_high <- summary_high %>% group_by(quintile) %>% summarise(sum = sum(n)/nrow(df_high))
+stratum_prop_high <- summary_high %>% group_by(stratum) %>% summarise(sum = sum(n)/nrow(df_high))
 
-# this table records the proportions for each quintile; also needed for stratification
-quntile_prop_high
+# this table records the proportions for each stratum; also needed for stratification
+stratum_prop_high
 
-ATE_stratification_high = quntile_prop_high$sum[1]*(summary_high$avg_y[2] - summary_high$avg_y[1]) + 
-  quntile_prop_high$sum[2]*(summary_high$avg_y[4] - summary_high$avg_y[3]) + 
-  quntile_prop_high$sum[3]*(summary_high$avg_y[6] - summary_high$avg_y[5]) + 
-  quntile_prop_high$sum[4]*(summary_high$avg_y[8] - summary_high$avg_y[7]) + 
-  quntile_prop_high$sum[5]*(summary_high$avg_y[10] - summary_high$avg_y[9])
-
+ATE_stratification_high = stratum_prop_high$sum[1]*(summary_high$avg_y[2] - summary_high$avg_y[1]) + 
+  stratum_prop_high$sum[2]*(summary_high$avg_y[4] - summary_high$avg_y[3]) + 
+  stratum_prop_high$sum[3]*(summary_high$avg_y[6] - summary_high$avg_y[5])
 
 ATE_stratification_high
 
@@ -407,49 +395,43 @@ time_stratification_high <- end.time_stratification_high - start.time_stratifica
 time_stratification_high
 ```
 
+We find that the ATE for the high dimensional dataset was `r round(ATE_stratification_high, 3)` with a runtime of `r round(time_stratification_high, 3)` seconds. 
 
 #### Low Dimensional Data
-
 
 ```{r}
 start.time_stratification_low <- Sys.time()
 
 df_low <- cbind(df_low, prop_score_low)
-quintile_values_low <- rep(NA, length(quintiles))
+stratum_values_low <- rep(NA, length(strata))
 
-for (i in 1:length(quintiles)){
-  quintile_values_low[i] <- quantile(prop_score_low, quintiles[i])
+for (i in 1:length(strata)){
+  stratum_values_low[i] <- quantile(prop_score_low, strata[i])
 }
 
-# values of quintiles for low data
-quintile_values_low
+# values of strata for low data
+stratum_values_low
 
-df_low$quintile_class_low <- rep(NA, nrow(df_low))
+df_low$stratum_class_low <- rep(NA, nrow(df_low))
 
-# assign quintile class to each observation
+# assign stratum class to each observation
 for (i in 1:nrow(df_low)){
-  if ((quintile_values_low[1] <= df_low$prop_score_low[i]) & 
-      (df_low$prop_score_low[i] < quintile_values_low[2])) {
-    df_low$quintile_class_low[i] <- 1
-  } else if ((quintile_values_low[2] <= df_low$prop_score_low[i]) & 
-             (df_low$prop_score_low[i] < quintile_values_low[3])) {
-    df_low$quintile_class_low[i] <- 2
-  } else if ((quintile_values_low[3] <= df_low$prop_score_low[i]) & 
-             (df_low$prop_score_low[i] < quintile_values_low[4])) {
-    df_low$quintile_class_low[i] <- 3 
-  } else if ((quintile_values_low[4] <= df_low$prop_score_low[i]) & 
-             (df_low$prop_score_low[i] < quintile_values_low[5])) {
-    df_low$quintile_class_low[i] <- 4
-  } else if ((quintile_values_low[5] <= df_low$prop_score_low[i]) & 
-             (df_low$prop_score_low[i] <= quintile_values_low[6])) {
-    df_low$quintile_class_low[i] <- 5
-  }
+  if ((stratum_values_low[1] <= df_low$prop_score_low[i]) & 
+      (df_low$prop_score_low[i] < stratum_values_low[2])) {
+    df_low$stratum_class_low[i] <- 1
+  } else if ((stratum_values_low[2] <= df_low$prop_score_low[i]) & 
+             (df_low$prop_score_low[i] < stratum_values_low[3])) {
+    df_low$stratum_class_low[i] <- 2
+  } else if ((stratum_values_low[3] <= df_low$prop_score_low[i]) & 
+             (df_low$prop_score_low[i] <= stratum_values_low[4])) {
+    df_low$stratum_class_low[i] <- 3 
+  } 
 }
 
 
 summary_low = expand.grid(
   A = c(0, 1), 
-  quintile = c(1, 2, 3, 4, 5), 
+  stratum = seq(1, K, by = 1),
   n = NA, 
   prop = NA, 
   avg_y = NA
@@ -457,7 +439,7 @@ summary_low = expand.grid(
 
 for (i in 1:nrow(summary_low)) {
   subset <- df_low[(df_low$A == summary_low$A[i]) & 
-                     (df_low$quintile_class_low == summary_low$quintile[i]), ]
+                     (df_low$stratum_class_low == summary_low$stratum[i]), ]
   summary_low$n[i] = nrow(subset)
   summary_low$prop[i] = summary_low$n[i]/nrow(df_low)
   summary_low$avg_y[i] = mean(subset$Y)
@@ -470,19 +452,17 @@ for (i in 1:nrow(summary_low)) {
   }
 }
 
-# this table records the mean response in each quintile; needed for stratification
+# this table records the mean response in each stratum; needed for stratification
 summary_low
 
-quntile_prop_low <- summary_low %>% group_by(quintile) %>% summarise(sum = sum(n)/nrow(df_low))
+stratum_prop_low <- summary_low %>% group_by(stratum) %>% summarise(sum = sum(n)/nrow(df_low))
 
-# this table records the proportions for each quintile; also needed for stratification
-quntile_prop_low
+# this table records the proportions for each stratum; also needed for stratification
+stratum_prop_low
 
-ATE_stratification_low = quntile_prop_low$sum[1]*(summary_low$avg_y[2] - summary_low$avg_y[1]) + 
-  quntile_prop_low$sum[2]*(summary_low$avg_y[4] - summary_low$avg_y[3]) + 
-  quntile_prop_low$sum[3]*(summary_low$avg_y[6] - summary_low$avg_y[5]) + 
-  quntile_prop_low$sum[4]*(summary_low$avg_y[8] - summary_low$avg_y[7]) + 
-  quntile_prop_low$sum[5]*(summary_low$avg_y[10] - summary_low$avg_y[9])
+ATE_stratification_low = stratum_prop_low$sum[1]*(summary_low$avg_y[2] - summary_low$avg_y[1]) + 
+  stratum_prop_low$sum[2]*(summary_low$avg_y[4] - summary_low$avg_y[3]) + 
+  stratum_prop_low$sum[3]*(summary_low$avg_y[6] - summary_low$avg_y[5]) 
 
 ATE_stratification_low
 
@@ -491,10 +471,17 @@ time_stratification_low <- end.time_stratification_low - start.time_stratificati
 time_stratification_low
 ```
 
+We find that the ATE for the low dimensional dataset was `r round(ATE_stratification_low, 3)` with a runtime of `r round(time_stratification_low, 3)` seconds. 
 
 ### Regression Adjustment
 
+In this method, we regress the response variable ($Y$) with the treatment variable ($A$) and the propensity scores estimated using our model above, in this case, trees. The estimated coefficient of the treatment variable ($A$) is then an estimate of the ATE. 
 
+D’Agostino (1998) and Austin (2011) compare regression adjustment with more traditional propensity score methods. One of the main advantages of the regression adjustment is in its simplicity in execution, in which one performs a somewhat basic linear regression model on two covariates and one response variable. 
+
+However, depending on the size of the dataset, this may run into computation issues as linear regression involves finding the inverse of a matrix. Additionally, regression adjustment may also not be helpful in cases where there is a strong separation between the two groups. 
+
+No such issues were present in this setup given that both datasets had a relatively small number of observations and there is no clear separation between the two groups, as shown in the residual plots below. 
 
 #### High Dimensional Data 
 
@@ -515,8 +502,15 @@ time_regression_adjustment_high <- end.time_regression_adjustment_high -
 time_regression_adjustment_high
 ```
 
-#### Low Dimensional Data
+```{r, echo = FALSE, out.width = "85%", fig.align = 'center'}
+plot(pred_high$residuals, main = "Residual Plot of Regression Adjustment Model - High Dim")
+points(which(df_high$A == 1), pred_high$residuals[which(df_high$A == 1)], col = "red")
+legend("topright", legend = c("A = 0", "A = 1"), fill = c("black", "red"))
+```
 
+We find that the ATE for the high dimensional dataset was `r round(ATE_regression_adjustment_high, 3)` with a runtime of `r round(time_regression_adjustment_high, 3)` seconds. 
+
+#### Low Dimensional Data
 
 ```{r}
 start.time_regression_adjustment_low <- Sys.time()
@@ -534,11 +528,28 @@ time_regression_adjustment_low <- end.time_regression_adjustment_low -
 time_regression_adjustment_low
 ```
 
+```{r, echo = FALSE, out.width = "85%", fig.align = 'center'}
+plot(pred_low$residuals, main = "Residual Plot of Regression Adjustment Model - Low Dim")
+points(which(df_low$A == 1), pred_low$residuals[which(df_low$A == 1)], col = "red")
+legend("topright", legend = c("A = 0", "A = 1"), fill = c("black", "red"))
+```
+
+We find that the ATE for the low dimensional dataset was `r ATE_regression_adjustment_low` with a runtime of `r time_regression_adjustment_low` seconds. 
+
 ### Stratification and Regression Adjustment
 
+In this last method, we will combine the first two methods together. In the same way as stratification, we split the datasets into $K = 3$ strata. The choice of $K = 3$ is again because it was the highest value of $K$ that did not give us an empty stratum. Within each stratum, we perform regression adjustment by regressing the response variable ($Y$) with the treatment variable ($A$) and the estimated propensity scores. We then have three coefficients for the variable A, one for each regression model. We then take a weighted average of these coefficients, with the weights relative to the population of each strata. 
+
+As D’Agostino (1998) notes, stratification combined with regression adjustment helps to reduce the bias in the treatment effect if the treatment groups are parallel and performs much better than propensity score matching alone. However, this method has the same drawbacks as stated in both stratification and regression adjustment. 
+
+```{r, echo = FALSE}
+summary_high
+summary_low
+```
+
+In particular, we see very imbalanced groups within each strata, as shown in the summary tables from the stratification method shown above, which may end up increasing the bias in our estimate of the ATE instead. We would be cautious of advocating for this method even if the ATE estimate was accurate. 
 
 #### High Dimensional Data 
-
 
 ```{r}
 start.time_stratification_regression_adjustment_high <- Sys.time()
@@ -546,13 +557,13 @@ start.time_stratification_regression_adjustment_high <- Sys.time()
 lm_beta_high <- rep(NA, K)
 
 for (i in 1:K){
-  subset <- df_high[df_high$quintile_class_high == i, ]
+  subset <- df_high[df_high$stratum_class_high == i, ]
   
   if (nrow(subset) == 0) { 
-    # if the quintile is empty, let the coefficient for A automatically be 0
+    # if the stratum is empty, let the coefficient for A automatically be 0
     lm_beta_high[i] <- 0
   } else if (sum(subset$prop_score_high) == 0) { 
-    # if the propensity scores in the quintile are all 0, 
+    # if the propensity scores in the stratum are all 0, 
     # let the coefficient for A automatically be 0
     lm_beta_low[i] <- 0
   } else {
@@ -565,12 +576,9 @@ for (i in 1:K){
 lm_beta_high 
 
 
-ATE_stratification_regression_adjustment_high <- quntile_prop_high$sum[1]*lm_beta_high[1] + 
-  quntile_prop_high$sum[2]*lm_beta_high[2] + 
-  quntile_prop_high$sum[3]*lm_beta_high[3] + 
-  quntile_prop_high$sum[4]*lm_beta_high[4] + 
-  quntile_prop_high$sum[5]*lm_beta_high[5]
-
+ATE_stratification_regression_adjustment_high <- stratum_prop_high$sum[1]*lm_beta_high[1] + 
+  stratum_prop_high$sum[2]*lm_beta_high[2] + 
+  stratum_prop_high$sum[3]*lm_beta_high[3] 
 
 ATE_stratification_regression_adjustment_high
 
@@ -583,21 +591,23 @@ time_stratification_regression_adjustment_high <-
 time_stratification_regression_adjustment_high
 ```
 
+We find that the ATE for the high dimensional dataset was `r round(ATE_stratification_regression_adjustment_high, 3)` with a runtime of `r round(time_stratification_regression_adjustment_high, 3)` seconds. 
+
 #### Low Dimensional Data
 
 ```{r}
 start.time_stratification_regression_adjustment_low <- Sys.time()
 
-lm_beta_low <- rep(NA, 5)
+lm_beta_low <- rep(NA, K)
 
 for (i in 1:K){
-  subset <- df_low[df_low$quintile_class_low == i, ]
+  subset <- df_low[df_low$stratum_class_low == i, ]
   
   if (nrow(subset) == 0) {
-    # if the quintile is empty, let the coefficient for A automatically be 0
+    # if the stratum is empty, let the coefficient for A automatically be 0
     lm_beta_low[i] <- 0
   } else if (sum(subset$prop_score_low) == 0) {
-    # if the propensity scores in the quintile are all 0
+    # if the propensity scores in the stratum are all 0
     # let the coefficient for A automatically be 0
     lm_beta_low[i] <- 0
   } else {
@@ -609,11 +619,9 @@ for (i in 1:K){
 
 lm_beta_low 
 
-ATE_stratification_regression_adjustment_low <- quntile_prop_low$sum[1]*lm_beta_low[1] + 
-  quntile_prop_low$sum[2]*lm_beta_low[2] + 
-  quntile_prop_low$sum[3]*lm_beta_low[3] + 
-  quntile_prop_low$sum[4]*lm_beta_low[4] + 
-  quntile_prop_low$sum[5]*lm_beta_low[5]
+ATE_stratification_regression_adjustment_low <- stratum_prop_low$sum[1]*lm_beta_low[1] + 
+  stratum_prop_low$sum[2]*lm_beta_low[2] + 
+  stratum_prop_low$sum[3]*lm_beta_low[3]
 
 ATE_stratification_regression_adjustment_low
 
@@ -626,12 +634,17 @@ time_stratification_regression_adjustment_low <-
 time_stratification_regression_adjustment_low
 ```
 
+We find that the ATE for the low dimensional dataset was `r round(ATE_stratification_regression_adjustment_low, 3)` with a runtime of `r round(time_stratification_regression_adjustment_low, 3)` seconds. 
+
 ## Results 
 
+We compare the accuracy and performance of the three ATE Estimation procedures below. 
 
 ### ATE Results
 
-```{r}
+We are provided the true ATE values of -3 for the high dimensional data and 2.5 for the low dimensional data. 
+
+```{r, echo = FALSE}
 # summarize table of results - ATE
 ATE_true_high <- -3
 ATE_true_low <- 2.5
@@ -654,8 +667,11 @@ ATE <- as.table(ATE)
 ATE
 ```
 
+From the table above, we see that regression adjustment performed the best for the high dimensional data and stratification performed the best for the low dimensional data. 
+
 ### Runtime results
-```{r}
+
+```{r, echo = FALSE}
 # summarize table of results - Run Time
 time <- matrix(c(time_propensity_score_high, 
                  time_stratification_high, 
@@ -669,7 +685,8 @@ time <- matrix(c(time_propensity_score_high,
 
 colnames(time) <- c("High Dimensional Data", "Low Dimensional Data")
 
-rownames(time) <- c("Propensity Score Estimation", "Stratification", "Regression Adjustment",
+rownames(time) <- c("Propensity Score Estimation", "Stratification", 
+                    "Regression Adjustment",
                     "Stratification + Regression Adjustment")
 
 time <- as.table(time)
@@ -677,9 +694,19 @@ time <- as.table(time)
 time
 ```
 
+Given the nature of trees, propensity score estimations are quickly calculated once we have the proper hyperparamters selected from cross-validation--even for the high dimensional data, propensity score estimations did not take more than two seconds. 
+
+It is also no surprise that, given the sizes of our two datasets, that regression adjustment was the fastest method. However, with larger datasets with more observations, this may not be the case. Stratification took the longest time, mainly due to the many intermediate calculations requited. Lastly, the combination method of both stratification and regression adjustment had a runtime between the two former methods. 
+
+However, we want to note that this .Rmd file was knitted using a computer with a NVMe SAMSUNG SSD with 16 GB RAM. Runtimes may vary from device to device. 
 
 ## Conclusion 
 
+Overall, we believe that using classification/regression trees for propensity scores was not the ideal approach for either dataset. While we cross-validated the complexity hyperparameter, cp, to help avoid with overfitting, our models for both the high dimensional and low dimensional datasets ended up estimating the same propensity score value for over half of the entire dataset. This would not be a very helpful model in differentiating our observations and of course affect our ATE estimations regardless of the method used. 
+
+We see this most prominently in stratification, in which different values of $K$, that is, the number of strata, resulted in an empty stratum in our results. Even after choosing a value of $K$ which would present no empty strata, we saw that each stratum tend to have imbalanced classes. In the case of the low dimensional dataset, one stratum only consisted of observations from the control group. These complications may explain why the stratification plus regression adjustment method would not have performed the best. 
+
+However, the results were relatively consistent among all three methods--there were no large deviations from the true value. In particular, the ATE for stratification was actually quite close to the true value for the low dimensional data. Additionally, compared to other methods, we note the fast run times for not only the propensity score estimations but for the ATE estimations as well. While we may not advocate for these estimation methods for their accuracy (and validity in certain cases), but these methods here show a fast and easy way to get a general sense of the average treatment effect. 
 
 ## References 
 
