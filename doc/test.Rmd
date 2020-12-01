@@ -52,6 +52,14 @@ df_low <- read.csv("../data/lowDim_dataset.csv")
 
 
 
+```{r, echo = FALSE}
+# justification for using weights
+print("High Dimensional Data")
+prop.table(table(df_high$A))
+
+print("Low Dimensional Data")
+prop.table(table(df_low$A))
+```
 
 ## Background on Classification/Regression Trees
 
@@ -706,7 +714,7 @@ Overall, we believe that using classification/regression trees for propensity sc
 
 We see this most prominently in stratification, in which different values of $K$, that is, the number of strata, resulted in an empty stratum in our results. Even after choosing a value of $K$ which would present no empty strata, we saw that each stratum tend to have imbalanced classes. In the case of the low dimensional dataset, one stratum only consisted of observations from the control group. These complications may explain why the stratification plus regression adjustment method would not have performed the best. 
 
-However, the results were relatively consistent among all three methods--there were no large deviations from the true value. In particular, the ATE for stratification was actually quite close to the true value for the low dimensional data. Additionally, compared to other methods, we note the fast run times for not only the propensity score estimations but for the ATE estimations as well. While we may not advocate for these estimation methods for their accuracy (and validity in certain cases), but these methods here show a fast and easy way to get a general sense of the average treatment effect. 
+However, the results were relatively consistent among all three methods--there were no large deviations from the true value. In particular, the ATE for stratification was actually quite close to the true value for the low dimensional data. Additionally, compared to other methods, we note the relative ease of interpretation and fast run times for not only the propensity score estimations but also for the ATE estimations as well. While we may not advocate for these estimation methods for their accuracy (and validity in certain cases), but these methods here show a fast and easy way to get a general sense of the average treatment effect. 
 
 ## References 
 
