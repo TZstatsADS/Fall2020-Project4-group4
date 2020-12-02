@@ -4,6 +4,7 @@ author: 'Group 4: Zhenglei Chen, Jaival Desai, Qinzhe Hu, Levi Lee, Luyao Sun, X
   Wei'
 date: "12/02/2020"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 editor_options:
@@ -47,12 +48,12 @@ df_low <- read.csv("../data/lowDim_dataset.csv")
 ```
 
 ## Introduction 
-
+In this project, we are looking for the best algorithm for causal inference of propensity scores to see how close the estimated ATEs are to the true ATEs. For the estimation of propensity scores, we use regression trees. The algorithms we use to compare ATE in this project are Stratification, Regression Adjustment and a combination of those two algorithms. We also compare the run times of different algorithms across both data sets.
 
 
 
 ## About the Data
-
+There are two attached data sets for this project, named *highDim_data set* and *lowDim_data set*. For high dimension data, there are 2000 observations, 185 variables ($V1$-$V185$), 1 treatment indicator ($A$) and 1 response variable ($Y$) . For low dimension data, there are 475 observations, 22 variables ($V1$-$V22$), 1 treatment indicator ($A$) and 1 response variable ($Y$).
 
 
 ```{r, echo = FALSE}
@@ -64,20 +65,39 @@ print("Low Dimensional Data")
 prop.table(table(df_low$A))
 ```
 
-## Background on Classification/Regression Trees
+From the table above, we see that the control groups are not balanced for both data sets. So for the purpose of comparing the different algorithms we chose to add weights to the observations while estimating the propensity scores using classification/regression trees.
+
+## Background 
+
+### Classification/Regression Trees
+The mathematical formula for regression/classification tree is shown below.
+
+$\hat{f}(x) = \sum_{m = 1}^{M} c_{m}I\{x \in R_{m}\}$
+Here, $M$ is the number of regions, $R_m$is a specific region and $c$ is the value associated with a region. 
+
+The way regression trees work is that the space is split into multiple regions based on some decisions. This process keeps repeating until a stopping rule is applied. In regression, we use square error loss to find the optimal tree model, but in classification, as with the case for estimating propensity scores, we use a measure of impurity. In our case, we use one called the Gini Index. In R, we use a library called "rpart" to run the tree algorithm. The function allows users the choice to choose several hyperparameters, of which is called "cp" indicating the complexity of the model. This is a method of pruning the tree and allows the algorithm to determine if a split is worth pursuing. That is, we get more complex trees with lower values of "cp". 
+
+The advantages of using a tree are interpretability and automated variable selection. It is easy to interpret because we can just see the tree and the decision rules at each split that help us understand how the algorithm is making the decisions at each step.
 
 
 
+
+### Propensity Scores
+
+$e(x) = Pr(T = 1 | X = x), ~ 0 < e(x) < 1$
+
+Based on the formula above, given the covariates, propensity score is the probability that the observation is in the treatment group (in our case, observations where A = 1). Since, our data is based on observational studies, we can use propensity scores to make causal inferences. 
+
+### Average Treatment Estimation
+
+$\Delta_{t} = E(Y_{1} - Y_{0} | T = 1)$
+ATE is defined as the difference in the average outcomes between observations assigned to treatment group and the control group.
 
 ## Cross-Validation
-
-
-
+We perform a 5 fold cross-validation for the high dimension and low dimension data sets. The main objective of the cross validation is to tune the "cp" parameter to avoid overfitting.
 
 ### Step 1: Set Controls and Establish Hyperparameters
-
-
-
+We set up the controls to start the the cross validation process
 
 ```{r}
 K <- 5  # number of CV folds
@@ -91,7 +111,7 @@ run.cv.trees_high <- FALSE # run cross-validation on the training set for trees 
 run.cv.trees_low <- FALSE # run cross-validation on the training set for trees on low dim data
 ```
 
-
+We choose a set of "cp" values here to cross validate in order to find the optimal "cp" value for each data set.
 
 
 ```{r}
@@ -106,7 +126,7 @@ hyper_grid_trees <- expand.grid(
 
 ### Step 2: Cross-Validate the Hyperparameters
 
-
+We source the library functions that we created to help cross validate the hyperparamter.
 
 
 ```{r loadlib_trees, echo=FALSE}
@@ -130,6 +150,8 @@ label_train_low = df_low[, 2]
 
 #### High Dimensional Data
 
+We run the cross validation algorithm on the high dimensional data.
+
 ```{r runcv_trees_high, message = FALSE, }
 set.seed(5243)
 
@@ -149,6 +171,8 @@ if(run.cv.trees_high){
 ```
 
 #### Low Dimensional Data
+
+We run the cross validation algorithm on the high dimensional data.
 
 ```{r runcv_trees_low, message = FALSE}
 set.seed(5243)
@@ -170,9 +194,11 @@ if(run.cv.trees_low){
 
 ### Step 3: Visualize CV Error and AUC
 
+After cross validating, we obtain the mean error and the AUC values for each potential "cp" value for both data sets. We display these values and standard errors in the plots below. 
 
 
 #### High Dimensional Data 
+Based on the plots and table below, we use the mean AUC value to select the "cp" value of $2^{-7}$.
 
 ```{r}
 # create data frame to organize results
@@ -215,6 +241,8 @@ best_cp_high
 ```
 
 #### Low Dimensional Data 
+
+Based on the plots and table below, we use the mean AUC value to select the "cp" value of $2^{-18}$.
 
 ```{r}
 # create data frame to organize results
@@ -847,10 +875,16 @@ However, the results were relatively consistent among all three methods--there w
 
 ## References 
 
- * Austin, Peter C. 2011. “An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies.” Multivariate Behavioral Research 46 (3): 399–424.
+  * Atkinson, Beth. “Recursive Partitioning And Regression Trees.” R Documentation, DataCamp, www.rdocumentation.org/packages/rpart/versions/4.1-15/topics/rpart. 
+  
+  * Austin, Peter C. 2011. “An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies.” Multivariate Behavioral Research 46 (3): 399–424.
 
  * Chan, David & Ge, Rong & Gershony, Ori & Hesterberg, Tim & Lambert, Diane. (2010). Evaluating online ad campaigns in a pipeline: Causal models at scale. Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery and Data Mining. 7-16. 10.1145/1835804.1835809. 
 
  * D'Agostino RB Jr. Propensity score methods for bias reduction in the comparison of a treatment to a non-randomized control group. Stat Med. 1998 Oct 15;17(19):2265-81. doi: 10.1002/(sici)1097-0258(19981015)17:19<2265::aid-sim918>3.0.co;2-b. PMID: 9802183.
 
+ * Hastie, Trevor,, Robert Tibshirani, and J. H Friedman. The Elements of Statistical Learning: Data Mining, Inference, and Prediction. 2nd ed. New York: Springer, 2009. Print.
+
  * Lunceford, Jared K, and Marie Davidian. 2004. “Stratification and Weighting via the Propensity Score in Estimation of Causal Treatment Effects a Comparative Study.” Statistics in Medicine 23 (19): 2937–60.
+ 
+ * Rosenbaum PR, Rubin DB. The central role of the propensity score in observational studies for causal efiects.Biometrika 1983; 70:41–55.
