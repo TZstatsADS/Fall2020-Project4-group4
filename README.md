@@ -44,8 +44,8 @@ Strati. & Reg Adjust. | 0.03195000 | 0.02493501
 
 + **Contribution statement**: All team members contribute to this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
   + **Zhenglei Chen** constructed the main frame of Method 2 (Regression Adjustment), worked with the team to revise the code of Method 2(Regression Adjustment), wrote the code of presenting one table of run times of three methods and the other table of ATE comparison, wrote the result and conclusion statement in the test.Rmd file, participated in every stage of the project’s discussion.
-  + **Jaival Desai** helped with the report writing.
-  + **Qinzhe Hu** constructed the description baseline for main material, and created the powerpoint slides for presentation. Presenter of our group. Participated in cross validation and propensity socres fold decision.
+  + **Jaival Desai** Helped with the report writing and participated in every stage of project's discussion. 
+  + **Qinzhe Hu** constructed the description baseline for main material, and created the powerpoint slides for presentation. Presenter of our group. Participated in cross validation and propensity scores fold decision.
   + **Levi Lee** revised the project 3 code (with permission from the TA) to cross-validate the tree model and wrote out the code for Methods 1 (Stratification) and 3 (Stratification + Regression Adjustment). He also revised code for Method 2 (Regression Adjustment), created the basic framework for the test.Rmd file, wrote the discussion for Method 2, Method 3, and Conclusion sections, and proofread the report.
   + **Luyao Sun** contributed the coding part of Method 1 (Stratification), wrote the discussion for Method 1 and edited the README file. Participated in every stage of the project's discussion.
   + **Xinyi Wei** helped complete the Regression Adjustment method and helped with the Stratification Regression Adjustment method.
