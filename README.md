@@ -13,25 +13,27 @@ Term: Fall 2020
 	+ Levi Lee
 	+ Luyao Sun
 	+ Xinyi Wei
-+ Project summary:  In this project, our group implemented Stratification, Regression Adjustment, and the combined method with propensity scores based on tree models for High and Low dimensional datasets, then evaluate theses three methods in terms of runtime and how close to true value of Average Treatment Effect (ATE). For stratification method, we choose K=3 strata to avoid empty stratum, and calculate ATE by formula . For the regression adjustment method, we regress the response variable (Y ) with the treatment variable (A) and the estimated propensity scores. What’s more, for method three, we combine the first two methods together to get coefficients for the variable A within every stratum, and take a weighted average of them to produce estimated ATE.
-+ Result
-ATE | High Dimension Data | Low Dimension Data
------------- | ------------- | -------------
-True ATE | Content from cell 2 | Content from cell 2
-Stratification | Content in the second column | Content in the second column
-Reg Adjust. | Content in the second column | Content in the second column
-Strati. & Reg Adjust. | Content in the second column | Content in the second column
++ **Project summary**:  In this project, our group implemented Stratification, Regression Adjustment, and the combined method with propensity scores based on tree models for High and Low dimensional datasets, then evaluate theses three methods in terms of runtime and how close to true value of Average Treatment Effect (ATE). For stratification method, we choose K=3 strata to avoid empty stratum, and calculate ATE by formula . For the regression adjustment method, we regress the response variable (Y ) with the treatment variable (A) and the estimated propensity scores. What’s more, for method three, we combine the first two methods together to get coefficients for the variable A within every stratum, and take a weighted average of them to produce estimated ATE.
++ **Result**
 
 ATE | High Dimension Data | Low Dimension Data
 ------------ | ------------- | -------------
-True ATE | Content from cell 2 | Content from cell 2
-Stratification | Content in the second column | Content in the second column
-Reg Adjust. | Content in the second column | Content in the second column
-Strati. & Reg Adjust. | Content in the second column | Content in the second column
+True ATE | -3.000000 | 2.500000
+Stratification | -2.144670 | 2.673899
+Reg Adjust. | -2.527116 | 3.053240
+Strati. & Reg Adjust. | -2.503732 | 3.022839
 
-+ Evaluation: The results showed above were relatively consistent among all three methods–there were no large deviations from the true value. In particular, the ATE for stratification was actually quite close to the true value for the low dimensional data. Additionally, compared to other methods, we note the relative ease of interpretation and fast run times for not only the propensity score estimations but also for the ATE estimations as well. 
+Runtime | High Dimension Data | Low Dimension Data
+------------ | ------------- | -------------
+PS Estimation | 1.24324393 | 0.03291011
+Stratification | 0.31650686 | 0.12155604
+Reg Adjust. | 0.04108310 | 0.01595902
+Strati. & Reg Adjust. | 0.03195000 | 0.02493501
 
-+ Reference
++ **Evaluation**: The results showed above were relatively consistent among all three methods–there were no large deviations from the true value. In particular, the ATE for stratification was actually quite close to the true value for the low dimensional data. Additionally, compared to other methods, we note the relative ease of interpretation and fast run times for not only the propensity score estimations but also for the ATE estimations as well. 
+
++ **Reference**
+
 1. Atkinson, Beth. “Recursive Partitioning And Regression Trees.” R Documentation, DataCamp, www.rdocumentation.org/packages/rpart/versions/4.1-15/topics/rpart.
 2. Austin, Peter C. 2011. “An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies.” Multivariate Behavioral Research 46 (3): 399–424.
 3. Chan, David & Ge, Rong & Gershony, Ori & Hesterberg, Tim & Lambert, Diane. (2010). Evaluating online ad campaigns in a pipeline: Causal models at scale. Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery and Data Mining. 7-16. 10.1145/1835804.1835809
