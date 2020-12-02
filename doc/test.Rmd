@@ -1,7 +1,6 @@
 ---
 title: 'Project 4: Causal Inference Algorithms Evaluation'
-author: 'Group 4: Zhenglei Chen, Jaival Desai, Qinzhe Hu, Levi Lee, Luyao Sun, Xinyi
-  Wei'
+author: 'Group 4: Zhenglei Chen, Jaival Desai, Qinzhe Hu, Levi Lee, Luyao Sun, Xinyi Wei'
 date: "12/02/2020"
 output:
   pdf_document: default
@@ -48,13 +47,12 @@ df_low <- read.csv("../data/lowDim_dataset.csv")
 ```
 
 ## Introduction 
-In this project, we are looking for the best algorithm for causal inference of propensity scores to see how close the estimated ATEs are to the true ATEs. For the estimation of propensity scores, we use regression trees. The algorithms we use to compare ATE in this project are Stratification, Regression Adjustment and a combination of those two algorithms. We also compare the run times of different algorithms across both data sets.
 
-
+In this project, we are looking for the best algorithm for causal inference of propensity scores to see how close the estimated average treatment effects (ATEs) are to the true ATEs. For the estimation of propensity scores, we use regression trees. The algorithms we use to estimate ATEs in this project are stratification, regression adjustment and a combination of these two algorithms. We also compare the run times of different algorithms and propensity score estimations across both data sets.
 
 ## About the Data
-There are two attached data sets for this project, named *highDim_data set* and *lowDim_data set*. For high dimension data, there are 2000 observations, 185 variables ($V1$-$V185$), 1 treatment indicator ($A$) and 1 response variable ($Y$) . For low dimension data, there are 475 observations, 22 variables ($V1$-$V22$), 1 treatment indicator ($A$) and 1 response variable ($Y$).
 
+There are two attached data sets for this project, named *highDim_data set* and *lowDim_data set*. For the high dimensional data, there are 2000 observations, 185 variables ($V1$-$V185$), 1 treatment indicator variable ($A$) and 1 continuous response variable ($Y$). For the low dimensional data, there are 475 observations, 22 variables ($V1$-$V22$), 1 treatment indicator variable ($A$) and 1 continuous response variable ($Y$).
 
 ```{r, echo = FALSE}
 # justification for using weights
@@ -65,38 +63,44 @@ print("Low Dimensional Data")
 prop.table(table(df_low$A))
 ```
 
-From the table above, we see that the control groups are not balanced for both data sets. So for the purpose of comparing the different algorithms we chose to add weights to the observations while estimating the propensity scores using classification/regression trees.
+From the tables above, we see that the control groups are not balanced for both data sets. So for the purpose of comparing the different algorithms, we chose to add weights to the observations while estimating the propensity scores using classification/regression trees.
 
 ## Background 
 
 ### Classification/Regression Trees
-The mathematical formula for regression/classification tree is shown below.
 
-$\hat{f}(x) = \sum_{m = 1}^{M} c_{m}I\{x \in R_{m}\}$
-Here, $M$ is the number of regions, $R_m$is a specific region and $c$ is the value associated with a region. 
+The mathematical formula for a regression/classification tree is shown below.
 
-The way regression trees work is that the space is split into multiple regions based on some decisions. This process keeps repeating until a stopping rule is applied. In regression, we use square error loss to find the optimal tree model, but in classification, as with the case for estimating propensity scores, we use a measure of impurity. In our case, we use one called the Gini Index. In R, we use a library called "rpart" to run the tree algorithm. The function allows users the choice to choose several hyperparameters, of which is called "cp" indicating the complexity of the model. This is a method of pruning the tree and allows the algorithm to determine if a split is worth pursuing. That is, we get more complex trees with lower values of "cp". 
+$$\hat{f}(x) = \sum_{m = 1}^{M} c_{m}I\{x \in R_{m}\}$$
 
-The advantages of using a tree are interpretability and automated variable selection. It is easy to interpret because we can just see the tree and the decision rules at each split that help us understand how the algorithm is making the decisions at each step.
+Here, $R_m$ is a specific region, $M$ is the number of regions, and $c_m$ is the value associated with a region. 
 
+The way regression trees work is that the space is split into multiple regions based on some set of decisions. This process keeps repeating until a stopping rule is applied. In regression, we use squared error loss to find the optimal tree model, but in classification, as with the case for estimating propensity scores, we use a measure of impurity. In our case, we use one called the Gini index. In R, we use a library called "rpart" to run the tree algorithm. This function allows users the choice of several hyperparameters, one of which is called "cp", indicating the complexity of the model. This is a method of pruning the tree and allows the algorithm to determine if a split is worth pursuing. That is, we get more complex trees with lower values of "cp". 
 
-
+The advantages of using a tree are interpretability and automated variable selection. It is easy to interpret because we can visualize the tree and the decision rules at each split. Additionally, these rules help to determine which variables are the most important when estimating the propensity scores. 
 
 ### Propensity Scores
 
-$e(x) = Pr(T = 1 | X = x), ~ 0 < e(x) < 1$
+The propensity score is defined as follows: 
 
-Based on the formula above, given the covariates, propensity score is the probability that the observation is in the treatment group (in our case, observations where A = 1). Since, our data is based on observational studies, we can use propensity scores to make causal inferences. 
+$$e(x) = Pr(T = 1 | X = x), ~ 0 < e(x) < 1$$
 
-### Average Treatment Estimation
+Based on the formula above, given the (multiple) covariates ($x$), the propensity score is the probability that the observation is in the treatment group (in our case, observations where $A = 1$). Since, our data is based on observational studies, we can use propensity scores to make causal inferences. 
 
-$\Delta_{t} = E(Y_{1} - Y_{0} | T = 1)$
-ATE is defined as the difference in the average outcomes between observations assigned to treatment group and the control group.
+### Average Treatment Effect (ATE)
+
+The average treatment effect is defined as follows: 
+
+$$\Delta_{t} = E(Y_{1} - Y_{0} | T = 1)$$
+
+ATE is defined as the difference in the average outcomes between observations assigned to treatment group and the control group. This allows us to measure the effect a treatment had on each group. 
 
 ## Cross-Validation
-We perform a 5 fold cross-validation for the high dimension and low dimension data sets. The main objective of the cross validation is to tune the "cp" parameter to avoid overfitting.
+
+We perform five fold cross-validation for the high dimension and low dimension data sets. The main objective of the cross validation is to tune the "cp" parameter to avoid overfitting.
 
 ### Step 1: Set Controls and Establish Hyperparameters
+
 We set up the controls to start the the cross validation process
 
 ```{r}
@@ -111,8 +115,7 @@ run.cv.trees_high <- FALSE # run cross-validation on the training set for trees 
 run.cv.trees_low <- FALSE # run cross-validation on the training set for trees on low dim data
 ```
 
-We choose a set of "cp" values here to cross validate in order to find the optimal "cp" value for each data set.
-
+We choose a set of "cp" values here to cross validate in order to find the optimal "cp" value for each data set; here we choose to do powers of two. 
 
 ```{r}
 # hyperparameters for trees
@@ -126,8 +129,7 @@ hyper_grid_trees <- expand.grid(
 
 ### Step 2: Cross-Validate the Hyperparameters
 
-We source the library functions that we created to help cross validate the hyperparamter.
-
+We source the library functions that we created to help cross validate the "cp" hyperparamter.
 
 ```{r loadlib_trees, echo=FALSE}
 source("../lib/train_trees.R") 
@@ -137,6 +139,8 @@ source("../lib/cross_validation_trees.R")
 
 
 ```{r features}
+# data pre-processing 
+
 # features are the predictors: V1 - Vp
 # column 1 is the response Y
 # column 2 is the treatment A
@@ -194,11 +198,14 @@ if(run.cv.trees_low){
 
 ### Step 3: Visualize CV Error and AUC
 
-After cross validating, we obtain the mean error and the AUC values for each potential "cp" value for both data sets. We display these values and standard errors in the plots below. 
+After cross validating, we obtain the mean error and the AUC values for each potential "cp" value for both data sets. We display these values and associated standard errors in the plots below. 
+
+Because of the imbalances in the groups for both datasets, we choose to not only weigh our observations, but to also focus on mean AUC when selecting the optimal hyperparameter. 
 
 
 #### High Dimensional Data 
-Based on the plots and table below, we use the mean AUC value to select the "cp" value of $2^{-7}$.
+
+Based on the plots and table below, we find that the model with the highest mean AUC value has a "cp" value of $2^{-7}$.
 
 ```{r}
 # create data frame to organize results
@@ -242,7 +249,7 @@ best_cp_high
 
 #### Low Dimensional Data 
 
-Based on the plots and table below, we use the mean AUC value to select the "cp" value of $2^{-18}$.
+Based on the plots and table below, we find that the model with the highest mean AUC value has a "cp" value of $2^{-18}$.
 
 ```{r}
 # create data frame to organize results
@@ -283,8 +290,7 @@ best_cp_low
 
 ## Propensity Score Estimation
 
-
-
+With the optimal "cp" parameters for each dataset, we now estimate the propensity scores using a weighted classification tree model. 
 
 ```{r weights}
 # imbalanced dataset requires weights 
@@ -350,7 +356,8 @@ With the estimated propensity scores on hand, we propose, explain, and discuss t
 
 ### Stratification
 
-In the stratification method, we are trying to achieve groups where propensity scores hold approximately. For choosing quantiles, the use of quantiles (K=5) was advocated by Rosenbaum and Rubin, however, choosing K=5 will lead to empty stratum for both high and low dimensional data. 
+In the stratification method, we are trying to achieve groups where propensity scores hold approximately. For choosing number of stata, $K$, five ($5$) was advocated by Rosenbaum and Rubin (1984). However, in our case, choosing $K = 5$ will lead to empty stratum for both high and low dimensional data.
+
 ```{r include=FALSE}
 K = 5
 strata <- seq(0, 1, by = 1/K)
@@ -469,18 +476,21 @@ for (i in 1:nrow(summary_low_k5)) {
 }
 ```
 
-
 ```{r}
-# When K=5, the second stratus of high and low dimensional data are both empty, but we need to make sure each stratum consists at least one object
+# when K = 5, the second stratus of high and low dimensional data are both empty
+# but we need to make sure each stratum consists at least one object
+
 summary_high_k5
 summary_low_k5
 ```
 
-Therefore we choose K=3 strata , which is the highest value of K that do not produce empty stratum. Then we can estimate ATE between treated and untreated subgroups by following formula:
+Therefore we choose $K = 3$ strata, which is the highest value of $K$ that do not produce empty stratum. Then we can estimate ATE between treated and untreated subgroups by following formula:
 
 ![](../figs/formula_strat.png)
 
-The advantage of stratification is that it controls systematic differences between the control and treated groups. However, as we mentioned earlier, stratification has balance issues in each stratum, in some extreme cases, some strata may contain subjects from only the treated group or control group, it is impossible to estimate treatment effect. What’s more, Lunceford and Davidian (2004) demonstrated that stratification results in estimates of average treatment effects with greater bias than does a variety of weighted estimators.
+where $K$ is the number of strata, $\hat{e}$ is the estimated propensity score, $Y$ is the response for each observation, and $T$ is the treatment variable (either $0$ or $1$). $N_j$ is the number of individuals in stratum $j$. $N_{1j}$ is the number of “treated” individuals in stratum $j$, while $N_{0j}$ is the number of “controlled” individuals in stratum $j$. $\hat{Q_j} = (\hat{q_{j-1}}, \hat{q_j}]$ where $\hat{q_j}$ is the $j$th sample quantile of the estimated propensity scores.
+
+The advantage of stratification is that it controls systematic differences between the control and treated groups. However, as we mentioned earlier, stratification has imbalance issues in each stratum. In some extreme cases, where some strata may contain subjects from only the treated group or control group, it becomes impossible to estimate treatment effect. What’s more, Lunceford and Davidian (2004) demonstrated that stratification results in estimates of average treatment effects with greater bias than does a variety of weighted estimators.
 
 ```{r}
 K = 3
@@ -560,7 +570,7 @@ time_stratification_high <- end.time_stratification_high - start.time_stratifica
 time_stratification_high
 ```
 
-We find that the ATE for the high dimensional dataset was `r round(ATE_stratification_high, 3)` with a runtime of `r round(time_stratification_high, 3)` seconds. 
+We find that the ATE for the high dimensional dataset was `r round(ATE_stratification_high, 3)` with a run time of `r round(time_stratification_high, 3)` seconds. 
 
 #### Low Dimensional Data
 
@@ -636,7 +646,7 @@ time_stratification_low <- end.time_stratification_low - start.time_stratificati
 time_stratification_low
 ```
 
-We find that the ATE for the low dimensional dataset was `r round(ATE_stratification_low, 3)` with a runtime of `r round(time_stratification_low, 3)` seconds. 
+We find that the ATE for the low dimensional dataset was `r round(ATE_stratification_low, 3)` with a run time of `r round(time_stratification_low, 3)` seconds. 
 
 ### Regression Adjustment
 
@@ -649,7 +659,6 @@ However, depending on the size of the dataset, this may run into computation iss
 No such issues were present in this setup given that both datasets had a relatively small number of observations and there is no clear separation between the two groups, as shown in the residual plots below. 
 
 #### High Dimensional Data 
-
 
 ```{r}
 start.time_regression_adjustment_high <- Sys.time()
@@ -673,7 +682,7 @@ points(which(df_high$A == 1), pred_high$residuals[which(df_high$A == 1)], col = 
 legend("topright", legend = c("A = 0", "A = 1"), fill = c("black", "red"))
 ```
 
-We find that the ATE for the high dimensional dataset was `r round(ATE_regression_adjustment_high, 3)` with a runtime of `r round(time_regression_adjustment_high, 3)` seconds. 
+We find that the ATE for the high dimensional dataset was `r round(ATE_regression_adjustment_high, 3)` with a run time of `r round(time_regression_adjustment_high, 3)` seconds. 
 
 #### Low Dimensional Data
 
@@ -699,7 +708,7 @@ points(which(df_low$A == 1), pred_low$residuals[which(df_low$A == 1)], col = "re
 legend("topright", legend = c("A = 0", "A = 1"), fill = c("black", "red"))
 ```
 
-We find that the ATE for the low dimensional dataset was `r ATE_regression_adjustment_low` with a runtime of `r time_regression_adjustment_low` seconds. 
+We find that the ATE for the low dimensional dataset was `r ATE_regression_adjustment_low` with a run time of `r time_regression_adjustment_low` seconds. 
 
 ### Stratification and Regression Adjustment
 
@@ -756,7 +765,7 @@ time_stratification_regression_adjustment_high <-
 time_stratification_regression_adjustment_high
 ```
 
-We find that the ATE for the high dimensional dataset was `r round(ATE_stratification_regression_adjustment_high, 3)` with a runtime of `r round(time_stratification_regression_adjustment_high, 3)` seconds. 
+We find that the ATE for the high dimensional dataset was `r round(ATE_stratification_regression_adjustment_high, 3)` with a run time of `r round(time_stratification_regression_adjustment_high, 3)` seconds. 
 
 #### Low Dimensional Data
 
@@ -799,7 +808,7 @@ time_stratification_regression_adjustment_low <-
 time_stratification_regression_adjustment_low
 ```
 
-We find that the ATE for the low dimensional dataset was `r round(ATE_stratification_regression_adjustment_low, 3)` with a runtime of `r round(time_stratification_regression_adjustment_low, 3)` seconds. 
+We find that the ATE for the low dimensional dataset was `r round(ATE_stratification_regression_adjustment_low, 3)` with a run time of `r round(time_stratification_regression_adjustment_low, 3)` seconds. 
 
 ## Results 
 
@@ -807,7 +816,7 @@ We compare the accuracy and performance of the three ATE Estimation procedures b
 
 ### ATE Results
 
-We are provided the true ATE values of -3 for the high dimensional data and 2.5 for the low dimensional data. 
+We are provided the true ATE values of $-3$ for the high dimensional data and $2.5$ for the low dimensional data. 
 
 ```{r, echo = FALSE}
 # summarize table of results - ATE
@@ -834,7 +843,7 @@ ATE
 
 From the table above, we see that regression adjustment performed the best for the high dimensional data and stratification performed the best for the low dimensional data. 
 
-### Runtime results
+### Run Time Results
 
 ```{r, echo = FALSE}
 # summarize table of results - Run Time
@@ -861,9 +870,9 @@ time
 
 Given the nature of trees, propensity score estimations are quickly calculated once we have the proper hyperparamters selected from cross-validation--even for the high dimensional data, propensity score estimations did not take more than two seconds. 
 
-It is also no surprise that, given the sizes of our two datasets, that regression adjustment was the fastest method. However, with larger datasets with more observations, this may not be the case. Stratification took the longest time, mainly due to the many intermediate calculations requited. Lastly, the combination method of both stratification and regression adjustment had a runtime between the two former methods. 
+It is also no surprise that, given the sizes of our two datasets, that regression adjustment was the fastest method. However, with larger datasets with more observations, this may not be the case. Stratification took the longest time, mainly due to the many intermediate calculations requited. Lastly, the combination method of both stratification and regression adjustment had a run time between the two former methods. 
 
-However, we want to note that this .Rmd file was knitted using a computer with a NVMe SAMSUNG SSD with 16 GB RAM. Runtimes may vary from device to device. 
+However, we want to note that this .Rmd file was knitted using a computer with a NVMe SAMSUNG SSD with 16 GB RAM. Run times may vary from device to device and with each iteration. Descriptions of run times are based on average run times we saw through numerous iterations. 
 
 ## Conclusion 
 
