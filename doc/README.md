@@ -10,6 +10,10 @@ test.Rmd & test.pdf & test.html
 
 	A cumulative report that describes our methods for prosensity score estimation and ATE estimation. 
 
+project4-presentation.pdf
+	
+	Presentation associated with Project 4. 
+
 Temporary files: 
 
 .Rhistory

@@ -5,7 +5,7 @@
 Term: Fall 2020
 
 + Team 4
-+ Projec title: Causal Inference Algorithms Evaluation: Stratification, Regression Adjustment, and the combined method with propensity score based on trees
++ Project title: Causal Inference Algorithms Evaluation: Stratification, Regression Adjustment, and the combined method with propensity score based on trees
 + Team members
 	+ Zhenglei Chen
 	+ Jaival Desai
@@ -44,8 +44,8 @@ Strati. & Reg Adjust. | 0.03195000 | 0.02493501
 
 + **Contribution statement**: All team members contribute to this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
   + **Zhenglei Chen** constructed the main frame of Method 2 (Regression Adjustment), worked with the team to revise the code of Method 2(Regression Adjustment), wrote the code of presenting one table of run times of three methods and the other table of ATE comparison, wrote the result and conclusion statement in the test.Rmd file, participated in every stage of the project’s discussion.
-  + **Jaival Desai**
-  + **Levi Lee** revised the project 3 code (with permission from the TA) to cross-validate the tree model and wrote out the code for Methods 1 (Stratification) and 3 (Stratification + Regression Adjustment). He also revised code for Method 2 (Regression Adjustment), created the basic framework for the test.Rmd file, and wrote the discussion for Method 2, Method 3, and Conclusion sections.
+  + **Jaival Desai** helped with the report writing.
+  + **Levi Lee** revised the project 3 code (with permission from the TA) to cross-validate the tree model and wrote out the code for Methods 1 (Stratification) and 3 (Stratification + Regression Adjustment). He also revised code for Method 2 (Regression Adjustment), created the basic framework for the test.Rmd file, wrote the discussion for Method 2, Method 3, and Conclusion sections, and proofread the report.
   + **Luyao Sun** contributed the coding part of Method 1 (Stratification), wrote the discussion for Method 1 and edited the README file. Participated in every stage of the proejct's discussion.
   + **Xinyi Wei** helped complete the Regression Adjustment method and helped with the Stratification Regression Adjustment method.
   

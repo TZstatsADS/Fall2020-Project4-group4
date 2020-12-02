@@ -52,7 +52,7 @@ In this project, we are looking for the best algorithm for causal inference of p
 
 ## About the Data
 
-There are two attached data sets for this project, named *highDim_data set* and *lowDim_data set*. For the high dimensional data, there are 2000 observations, 185 variables ($V1$-$V185$), 1 treatment indicator variable ($A$) and 1 continuous response variable ($Y$). For the low dimensional data, there are 475 observations, 22 variables ($V1$-$V22$), 1 treatment indicator variable ($A$) and 1 continuous response variable ($Y$).
+There are two attached data sets for this project, named *highDim_data set* and *lowDim_data set*, which were from the Atlantic Causal Inference Conference (ACIC) Data Challenge. For the high dimensional data, there are 2000 observations, 185 variables ($V1$-$V185$), 1 treatment indicator variable ($A$) and 1 continuous response variable ($Y$). For the low dimensional data, there are 475 observations, 22 variables ($V1$-$V22$), 1 treatment indicator variable ($A$) and 1 continuous response variable ($Y$).
 
 ```{r, echo = FALSE}
 # justification for using weights
@@ -356,7 +356,7 @@ With the estimated propensity scores on hand, we propose, explain, and discuss t
 
 ### Stratification
 
-In the stratification method, we are trying to achieve groups where propensity scores hold approximately. For choosing number of stata, $K$, five ($5$) was advocated by Rosenbaum and Rubin (1984). However, in our case, choosing $K = 5$ will lead to empty stratum for both high and low dimensional data.
+In the stratification method, we are trying to achieve groups where propensity scores hold approximately. For choosing number of strata, $K$, five ($5$) was advocated by Rosenbaum and Rubin (1984). However, in our case, choosing $K = 5$ will lead to empty stratum for both high and low dimensional data.
 
 ```{r include=FALSE}
 K = 5
